@@ -1,0 +1,748 @@
+﻿#include <windows.h>
+#include <winuser.h>
+#include <iostream>
+
+static HWND g_msgWnd = nullptr;
+
+// Forward declaration
+void RegisterForRawInput();
+
+// Message-only window procedure to receive raw input
+LRESULT CALLBACK RawInputProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    if (msg == WM_INPUT) {
+        UINT size = 0;
+        GetRawInputData((HRAWINPUT)lParam, RID_INPUT, nullptr, &size, sizeof(RAWINPUTHEADER));
+        if (size == 0) return 0;
+
+        RAWINPUT* raw = (RAWINPUT*)malloc(size);
+        if (!raw) return 0;
+        if (GetRawInputData((HRAWINPUT)lParam, RID_INPUT, raw, &size, sizeof(RAWINPUTHEADER)) != size) {
+            free(raw);
+            return 0;
+        }
+
+        switch (raw->header.dwType) {
+        case RIM_TYPEMOUSE: {
+            auto& mi = raw->data.mouse;
+            std::cout << "[raw-mouse] Move=" << mi.lLastX << "," << mi.lLastY
+                << " buttons=0x" << std::hex << mi.usButtonFlags << std::dec << std::endl;
+            // Forward as mouse events
+            INPUT in = {};
+            in.type = INPUT_MOUSE;
+            if (mi.usButtonFlags & RI_MOUSE_LEFT_BUTTON_DOWN) {
+                in.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
+                SendInput(1, &in, sizeof(INPUT));
+            }
+            else if (mi.usButtonFlags & RI_MOUSE_LEFT_BUTTON_UP) {
+                in.mi.dwFlags = MOUSEEVENTF_LEFTUP;
+                SendInput(1, &in, sizeof(INPUT));
+            }
+            break;
+        }
+        case RIM_TYPEHID: {
+            // HID touch reports (usage page 0x0D)
+            std::cout << "[raw-touch] HID report size=" << raw->data.hid.dwSizeHid << std::endl;
+            // TODO: decode raw->data.hid.bRawData for coordinates
+            // Simulate a click at center of screen
+            RECT rc;
+            GetClientRect(GetDesktopWindow(), &rc);
+            POINT pt = { rc.right / 2, rc.bottom / 2 };
+            SetCursorPos(pt.x, pt.y);
+            INPUT in[2] = {};
+            in[0].type = INPUT_MOUSE;
+            in[0].mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
+            in[1].type = INPUT_MOUSE;
+            in[1].mi.dwFlags = MOUSEEVENTF_LEFTUP;
+            SendInput(2, in, sizeof(INPUT));
+            break;
+        }
+        default:
+            break;
+        }
+
+        free(raw);
+        return 0;
+    }
+    return DefWindowProcA(hwnd, msg, wParam, lParam);
+}
+
+// Register for raw input from both mouse and touch digitizer
+void RegisterForRawInput() {
+    RAWINPUTDEVICE rid[2];
+    ZeroMemory(rid, sizeof(rid));
+    // Mouse (Usage Page 1, Usage 2)
+    rid[0].usUsagePage = 0x01;
+    rid[0].usUsage = 0x02;
+    rid[0].dwFlags = RIDEV_INPUTSINK;
+    rid[0].hwndTarget = g_msgWnd;
+    // Touch digitizer (Usage Page 13, Usage 4)
+    rid[1].usUsagePage = 0x0D;
+    rid[1].usUsage = 0x04;
+    rid[1].dwFlags = RIDEV_INPUTSINK;
+    rid[1].hwndTarget = g_msgWnd;
+
+    if (!RegisterRawInputDevices(rid, 2, sizeof(RAWINPUTDEVICE))) {
+        std::cout << "[error] RegisterRawInputDevices failed, GLE=" << GetLastError() << std::endl;
+    }
+    else {
+        std::cout << "[info] Registered for raw mouse and touch" << std::endl;
+    }
+}
+
+// Thread: create hidden window and process raw input
+DWORD WINAPI InputThread(LPVOID) {
+    WNDCLASSA wc = {};
+    wc.lpfnWndProc = RawInputProc;
+    wc.hInstance = GetModuleHandleA(nullptr);
+    wc.lpszClassName = "RawInputWnd";
+    RegisterClassA(&wc);
+
+    // Create a hidden popup window to receive raw input
+    g_msgWnd = CreateWindowA(
+        "RawInputWnd", "", WS_POPUP,
+        0, 0, 0, 0,
+        nullptr, nullptr,
+        wc.hInstance, nullptr);
+    if (!g_msgWnd) {
+        std::cout << "[error] Create hidden window failed, GLE=" << GetLastError() << std::endl;
+        return 1;
+    }
+    // Hide it explicitly
+    ShowWindow(g_msgWnd, SW_HIDE);
+
+    std::cout << "[info] Hidden input window created" << std::endl;
+    RegisterForRawInput();
+
+    MSG msg;
+    while (GetMessage(&msg, nullptr, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+    return 0;
+}
+
+// DLL entry: allocate console and start input thread
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID) {
+    if (reason == DLL_PROCESS_ATTACH) {
+        DisableThreadLibraryCalls(hModule);
+        AllocConsole();
+        FILE* f;
+        freopen_s(&f, "CONOUT$", "w", stdout);
+        freopen_s(&f, "CONOUT$", "w", stderr);
+        std::cout << "[dll] Console ready" << std::endl;
+
+        HANDLE h = CreateThread(nullptr, 0, InputThread, nullptr, 0, nullptr);
+        if (!h) std::cout << "[error] CreateThread failed, GLE=" << GetLastError() << std::endl;
+        else CloseHandle(h);
+    }
+    return TRUE;
+}
+
+
+
+
+
+#if 0
+#include <windows.h>
+#include <windowsx.h>
+#include <tchar.h>
+#include <imagehlp.h>  // for ImageDirectoryEntryToData
+#pragma comment(lib, "Imagehlp.lib")
+#include <cassert>
+#include <d3d9.h>
+#include <iostream>
+
+#include "imgui.h"
+#include "imgui_internal.h"
+#include "imgui_impl_dx9.h"
+#include "imgui_impl_win32.h"
+
+#include "assets.hpp"
+#include "style.hpp"
+#include "widgets.hpp"
+#include "textures.hpp"
+
+//=========== D3D9 Globals ==========
+static LPDIRECT3D9           g_pD3D = nullptr;
+static LPDIRECT3DDEVICE9     g_pd3dDevice = nullptr;
+static bool                  g_DeviceLost = false;
+static UINT                  g_ResizeWidth = 0, g_ResizeHeight = 0;
+static D3DPRESENT_PARAMETERS g_d3dpp = {};
+
+//=========== Globals for hooking & submonitor ==========
+static HWND     g_gameHwnd = nullptr;
+static HWND     g_subHwnd = nullptr;
+static RECT     secondRect = {};
+static int      g_monitorCount = 0;
+static const char* SUB_CLASS = "SubMonitorClass";
+
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND, UINT, WPARAM, LPARAM);
+
+//=============================================================================
+// IAT-hook CreateWindowExA in target process
+using CWEXA_t = HWND(WINAPI*)(DWORD, LPCSTR, LPCSTR, DWORD, int, int, int, int, HWND, HMENU, HINSTANCE, LPVOID);
+static CWEXA_t origCreateWindowExA = nullptr;
+
+HWND WINAPI hkCreateWindowExA(
+    DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName,
+    DWORD dwStyle, int X, int Y, int nWidth, int nHeight,
+    HWND hWndParent, HMENU hMenu, HINSTANCE hInst, LPVOID lpParam)
+{
+    HWND hwnd = origCreateWindowExA(
+        dwExStyle, lpClassName, lpWindowName,
+        dwStyle, X, Y, nWidth, nHeight,
+        hWndParent, hMenu, hInst, lpParam);
+    // Capture first visible top-level window from game modules
+    if (!g_gameHwnd && hwnd && !(dwStyle & WS_CHILD)) {
+        g_gameHwnd = hwnd;
+        std::cout << "[hook] Captured game HWND=0x"
+            << std::hex << reinterpret_cast<uintptr_t>(hwnd)
+            << std::dec << " class='" << (lpClassName ? lpClassName : "<null>") << "'" << std::endl;
+    }
+    return hwnd;
+}
+
+void HookIAT_CreateWindowExA()
+{
+    HMODULE hModule = GetModuleHandleA(nullptr);
+    ULONG size;
+    auto importDesc = (PIMAGE_IMPORT_DESCRIPTOR)
+        ImageDirectoryEntryToData(hModule, TRUE, IMAGE_DIRECTORY_ENTRY_IMPORT, &size);
+    for (; importDesc->Name; importDesc++) {
+        LPCSTR mod = (LPCSTR)((BYTE*)hModule + importDesc->Name);
+        if (_stricmp(mod, "user32.dll") != 0) continue;
+        auto thunk = (PIMAGE_THUNK_DATA)((BYTE*)hModule + importDesc->FirstThunk);
+        for (; thunk->u1.Function; thunk++) {
+            auto ppfn = (PROC*)&thunk->u1.Function;
+            if (*ppfn == (PROC)CreateWindowExA) {
+                DWORD old;
+                VirtualProtect(ppfn, sizeof(PROC), PAGE_READWRITE, &old);
+                origCreateWindowExA = (CWEXA_t)*ppfn;
+                *ppfn = (PROC)hkCreateWindowExA;
+                VirtualProtect(ppfn, sizeof(PROC), old, &old);
+                std::cout << "[hook] IAT patch applied for CreateWindowExA" << std::endl;
+                return;
+            }
+        }
+    }
+    std::cout << "[warn] user32.dll import not found" << std::endl;
+}
+
+//=============================================================================
+// Submonitor WndProc: handle touch and forward
+LRESULT CALLBACK SubWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    if (msg == WM_TOUCH) {
+        UINT c = LOWORD(wParam);
+        TOUCHINPUT* ti = new TOUCHINPUT[c];
+        if (GetTouchInputInfo((HTOUCHINPUT)lParam, c, ti, sizeof(TOUCHINPUT))) {
+            ImGuiIO& io = ImGui::GetIO();
+            for (UINT i = 0; i < c; ++i) {
+                POINT pt = { TOUCH_COORD_TO_PIXEL(ti[i].x), TOUCH_COORD_TO_PIXEL(ti[i].y) };
+                ScreenToClient(hwnd, &pt);
+                io.AddMousePosEvent((float)pt.x, (float)pt.y);
+                bool down = (ti[i].dwFlags & TOUCHEVENTF_DOWN) != 0;
+                io.AddMouseButtonEvent(0, down);
+                // forward to game
+                POINT sp = pt;
+                ClientToScreen(hwnd, &sp);
+                ScreenToClient(g_gameHwnd, &sp);
+                PostMessage(g_gameHwnd, down ? WM_LBUTTONDOWN : WM_LBUTTONUP,
+                    down ? MK_LBUTTON : 0, MAKELPARAM(sp.x, sp.y));
+                PostMessage(g_gameHwnd, WM_MOUSEMOVE, 0, MAKELPARAM(sp.x, sp.y));
+            }
+            CloseTouchInputHandle((HTOUCHINPUT)lParam);
+        }
+        delete[] ti;
+        return 0;
+    }
+    return DefWindowProcA(hwnd, msg, wParam, lParam);
+}
+
+//=============================================================================
+// Helper: find second monitor and create sub-window
+void FindSecondMonitor()
+{
+    g_monitorCount = 0;
+    EnumDisplayMonitors(nullptr, nullptr, [](HMONITOR h, HDC, LPRECT, LPARAM)->BOOL {
+        MONITORINFO mi = { sizeof(mi) };
+        if (GetMonitorInfo(h, &mi) && ++g_monitorCount == 2) {
+            secondRect = mi.rcMonitor;
+            return FALSE;
+        }
+        return TRUE;
+        }, 0);
+    std::cout << "[info] Monitor2 rect: (" << secondRect.left << "," << secondRect.top
+        << ")-(" << secondRect.right << "," << secondRect.bottom << ")" << std::endl;
+}
+
+void CreateSubMonitorWindow()
+{
+    WNDCLASSA wc = {};
+    wc.lpfnWndProc = SubWndProc;
+    wc.hInstance = GetModuleHandleA(nullptr);
+    wc.lpszClassName = SUB_CLASS;
+    RegisterClassA(&wc);
+
+    g_subHwnd = CreateWindowExA(
+        WS_EX_TOPMOST | WS_EX_LAYERED, SUB_CLASS, "SubMonitor",
+        WS_POPUP,
+        secondRect.left, secondRect.top,
+        secondRect.right - secondRect.left,
+        secondRect.bottom - secondRect.top,
+        nullptr, nullptr, wc.hInstance, nullptr);
+
+    RegisterTouchWindow(g_subHwnd, 0);
+    ShowWindow(g_subHwnd, SW_SHOW);
+    std::cout << "[info] Subwindow HWND=0x" << std::hex << (uintptr_t)g_subHwnd << std::dec << std::endl;
+}
+
+//=============================================================================
+// D3D9 init & logging
+bool CreateDeviceD3D(HWND hWnd)
+{
+    std::cout << "[d3d] Creating device for HWND=0x" << std::hex << (uintptr_t)hWnd << std::dec << std::endl;
+    g_pD3D = Direct3DCreate9(D3D_SDK_VERSION);
+    if (!g_pD3D) { std::cout << "[error] Direct3DCreate9 failed\n"; return false; }
+    ZeroMemory(&g_d3dpp, sizeof(g_d3dpp));
+    g_d3dpp.hDeviceWindow = hWnd;
+    RECT rc; GetClientRect(hWnd, &rc);
+    g_d3dpp.BackBufferWidth = rc.right - rc.left;
+    g_d3dpp.BackBufferHeight = rc.bottom - rc.top;
+    g_d3dpp.Windowed = TRUE;
+    g_d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    g_d3dpp.BackBufferFormat = D3DFMT_UNKNOWN;
+    g_d3dpp.EnableAutoDepthStencil = TRUE;
+    g_d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
+    g_d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_ONE;
+    HRESULT hr = g_pD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+        hWnd, D3DCREATE_HARDWARE_VERTEXPROCESSING,
+        &g_d3dpp, &g_pd3dDevice);
+    if (FAILED(hr)) {
+        std::cout << "[error] CreateDevice failed HRESULT=0x" << std::hex << hr << std::dec << std::endl;
+        return false;
+    }
+    std::cout << "[d3d] Device created\n";
+    return true;
+}
+
+void CleanupDeviceD3D()
+{
+    if (g_pd3dDevice) { g_pd3dDevice->Release(); g_pd3dDevice = nullptr; }
+    if (g_pD3D) { g_pD3D->Release();       g_pD3D = nullptr; }
+    std::cout << "[d3d] Cleanup done\n";
+}
+
+void ResetDevice()
+{
+    ImGui_ImplDX9_InvalidateDeviceObjects();
+    if (g_pd3dDevice->Reset(&g_d3dpp) == D3DERR_INVALIDCALL)
+        std::cout << "[error] Reset invalid call\n";
+    ImGui_ImplDX9_CreateDeviceObjects();
+    std::cout << "[d3d] Reset complete\n";
+}
+
+//=============================================================================
+// MainThread: waits for game hwnd (set by IAT hook), then sets up submonitor
+DWORD WINAPI MainThread(LPVOID)
+{
+    std::cout << "[thread] Started" << std::endl;
+    HookIAT_CreateWindowExA();
+
+    // Wait until hkCreateWindowExA captures the window
+    while (!g_gameHwnd) {
+        Sleep(50);
+    }
+    std::cout << "[thread] Game HWND=0x" << std::hex << (uintptr_t)g_gameHwnd << std::dec << std::endl;
+
+    FindSecondMonitor();
+    CreateSubMonitorWindow();
+
+    if (!CreateDeviceD3D(g_subHwnd)) {
+        std::cout << "[error] CreateDeviceD3D failed, idle..." << std::endl;
+        for (;;) Sleep(1000);
+    }
+
+    // TODO: ImGui init + loop
+    for (;;) Sleep(1000);
+}
+
+//=============================================================================
+// DLL entry: alloc console + start thread
+BOOL APIENTRY DllMain(HMODULE hMod, DWORD reason, LPVOID)
+{
+    if (reason == DLL_PROCESS_ATTACH) {
+        DisableThreadLibraryCalls(hMod);
+        AllocConsole();
+        FILE* f;
+        freopen_s(&f, "CONOUT$", "w", stdout);
+        freopen_s(&f, "CONOUT$", "w", stderr);
+        std::cout << "[dll] Console ready" << std::endl;
+        CreateThread(nullptr, 0, MainThread, nullptr, 0, nullptr);
+    }
+    return TRUE;
+}
+#endif
+
+#if 0
+#include <windows.h>
+#include <windowsx.h>
+#include <tchar.h>
+#include <cassert>
+#include <d3d9.h>
+#include <iostream>
+
+#include "imgui.h"
+#include "imgui_internal.h"
+#include "imgui_impl_dx9.h"
+#include "imgui_impl_win32.h"
+
+#include "assets.hpp"
+#include "style.hpp"
+#include "widgets.hpp"
+#include "textures.hpp"
+
+//=========== D3D9 Globals ===========
+static LPDIRECT3D9           g_pD3D = nullptr;
+static LPDIRECT3DDEVICE9     g_pd3dDevice = nullptr;
+static bool                  g_DeviceLost = false;
+static UINT                  g_ResizeWidth = 0,
+g_ResizeHeight = 0;
+static D3DPRESENT_PARAMETERS g_d3dpp = {};
+
+//=========== Hooking & Submonitor Globals ===========
+static HWND     g_gameHwnd = nullptr;
+static WNDPROC  g_origGameProc = nullptr;
+static HWND     g_subHwnd = nullptr;
+static RECT     secondRect = {};
+static int      g_monitorCount = 0;
+static const char* SUB_CLASS = "SubMonitorClass";
+
+// Forward declarations
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND, UINT, WPARAM, LPARAM);
+
+// Find main game window by PID
+BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM)
+{
+    DWORD pid;
+    GetWindowThreadProcessId(hwnd, &pid);
+    if (pid == GetCurrentProcessId() && IsWindowVisible(hwnd)) {
+        g_gameHwnd = hwnd;
+        return FALSE; // stop enumeration
+    }
+    return TRUE; // continue
+}
+
+void FindGameWindow()
+{
+    g_gameHwnd = nullptr;
+    EnumWindows(EnumWindowsProc, 0);
+    if (g_gameHwnd) {
+        std::cout << "[info] Captured game window HWND=0x"
+            << std::hex << reinterpret_cast<uintptr_t>(g_gameHwnd)
+            << std::dec << std::endl;
+    }
+}
+
+//=============================================================================
+// Find second monitor bounds via EnumDisplayMonitors
+BOOL CALLBACK MonitorEnum(HMONITOR hMon, HDC, LPRECT, LPARAM)
+{
+    MONITORINFO mi = { sizeof(mi) };
+    if (GetMonitorInfo(hMon, &mi) && ++g_monitorCount == 2) {
+        secondRect = mi.rcMonitor;
+        return FALSE;
+    }
+    return TRUE;
+}
+
+void FindSecondMonitor()
+{
+    g_monitorCount = 0;
+    EnumDisplayMonitors(nullptr, nullptr, MonitorEnum, 0);
+    std::cout << "[info] Second monitor bounds:"
+        << " left=" << secondRect.left
+        << " top=" << secondRect.top
+        << " right=" << secondRect.right
+        << " bottom=" << secondRect.bottom
+        << std::endl;
+}
+
+// Submonitor window proc: forward touches & log
+LRESULT CALLBACK SubWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    if (msg == WM_TOUCH) {
+        std::cout << "[sub] WM_TOUCH" << std::endl;
+        UINT cInputs = LOWORD(wParam);
+        TOUCHINPUT* pInputs = new TOUCHINPUT[cInputs];
+        if (GetTouchInputInfo((HTOUCHINPUT)lParam, cInputs, pInputs, sizeof(TOUCHINPUT))) {
+            ImGuiIO& io = ImGui::GetIO();
+            for (UINT i = 0; i < cInputs; ++i) {
+                POINT pt = { TOUCH_COORD_TO_PIXEL(pInputs[i].x), TOUCH_COORD_TO_PIXEL(pInputs[i].y) };
+                ScreenToClient(hwnd, &pt);
+                io.AddMousePosEvent((float)pt.x, (float)pt.y);
+                if (pInputs[i].dwFlags & TOUCHEVENTF_DOWN) {
+                    io.AddMouseButtonEvent(0, true);
+                    std::cout << "[sub] Touch DOWN at " << pt.x << "," << pt.y << std::endl;
+                }
+                else if (pInputs[i].dwFlags & TOUCHEVENTF_UP) {
+                    io.AddMouseButtonEvent(0, false);
+                    std::cout << "[sub] Touch UP at " << pt.x << "," << pt.y << std::endl;
+                }
+                // forward to game
+                POINT screenPt = pt;
+                ClientToScreen(hwnd, &screenPt);
+                ScreenToClient(g_gameHwnd, &screenPt);
+                PostMessage(g_gameHwnd, WM_MOUSEMOVE, 0, MAKELPARAM(screenPt.x, screenPt.y));
+                if (pInputs[i].dwFlags & TOUCHEVENTF_DOWN)
+                    PostMessage(g_gameHwnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(screenPt.x, screenPt.y));
+                else if (pInputs[i].dwFlags & TOUCHEVENTF_UP)
+                    PostMessage(g_gameHwnd, WM_LBUTTONUP, 0, MAKELPARAM(screenPt.x, screenPt.y));
+            }
+            CloseTouchInputHandle((HTOUCHINPUT)lParam);
+        }
+        delete[] pInputs;
+        return 0;
+    }
+    return DefWindowProcA(hwnd, msg, wParam, lParam);
+}
+
+void CreateSubMonitorWindow()
+{
+    WNDCLASSA wc = {};
+    wc.style = CS_HREDRAW | CS_VREDRAW;
+    wc.lpfnWndProc = SubWndProc;
+    wc.hInstance = GetModuleHandleA(nullptr);
+    wc.lpszClassName = SUB_CLASS;
+    RegisterClassA(&wc);
+
+    g_subHwnd = CreateWindowExA(
+        WS_EX_TOPMOST | WS_EX_LAYERED,
+        SUB_CLASS,
+        "SubMonitor",
+        WS_POPUP,
+        secondRect.left,
+        secondRect.top,
+        secondRect.right - secondRect.left,
+        secondRect.bottom - secondRect.top,
+        nullptr, nullptr,
+        wc.hInstance,
+        nullptr);
+
+    RegisterTouchWindow(g_subHwnd, 0);
+    ShowWindow(g_subHwnd, SW_SHOW);
+    std::cout << "[info] Submonitor window created HWND=0x"
+        << std::hex << reinterpret_cast<uintptr_t>(g_subHwnd) << std::dec << std::endl;
+}
+
+
+// Subclass game window to intercept touch/pointer (optional)
+LRESULT CALLBACK GameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    switch (msg)
+    {
+    case WM_TOUCH:
+    case WM_POINTERDOWN:
+    case WM_POINTERUPDATE:
+    case WM_POINTERUP:
+        // Could handle or swallow here to prevent defocus
+        break;
+    }
+    return CallWindowProc(g_origGameProc, hwnd, msg, wParam, lParam);
+}
+
+void HookGameWndProc()
+{
+    if (!g_gameHwnd) return;
+    RegisterTouchWindow(g_gameHwnd, 0);
+    g_origGameProc = (WNDPROC)
+        SetWindowLongPtr(g_gameHwnd, GWLP_WNDPROC, (LONG_PTR)GameWndProc);
+}
+
+
+//-----------------------------------------------------------------------------
+// D3D9 setup & cleanup (same as original)
+bool CreateDeviceD3D(HWND hWnd)
+{
+    if ((g_pD3D = Direct3DCreate9(D3D_SDK_VERSION)) == nullptr)
+        return false;
+    ZeroMemory(&g_d3dpp, sizeof(g_d3dpp));
+    g_d3dpp.Windowed = TRUE;
+    g_d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    g_d3dpp.BackBufferFormat = D3DFMT_UNKNOWN;
+    g_d3dpp.EnableAutoDepthStencil = TRUE;
+    g_d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
+    g_d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_ONE;
+    return g_pD3D->CreateDevice(
+        D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd,
+        D3DCREATE_HARDWARE_VERTEXPROCESSING,
+        &g_d3dpp, &g_pd3dDevice) >= 0;
+}
+
+void CleanupDeviceD3D()
+{
+    if (g_pd3dDevice) { g_pd3dDevice->Release(); g_pd3dDevice = nullptr; }
+    if (g_pD3D) { g_pD3D->Release();       g_pD3D = nullptr; }
+}
+
+void ResetDevice()
+{
+    ImGui_ImplDX9_InvalidateDeviceObjects();
+    if (g_pd3dDevice->Reset(&g_d3dpp) == D3DERR_INVALIDCALL)
+        IM_ASSERT(0);
+    ImGui_ImplDX9_CreateDeviceObjects();
+}
+
+//-----------------------------------------------------------------------------
+// Main thread: init, ImGui loop on submonitor
+DWORD WINAPI MainThread(LPVOID)
+{
+    std::cout << "[thread] MainThread started" << std::endl;
+    // wait for game window via polling
+    while (!g_gameHwnd) {
+        FindGameWindow();
+        Sleep(50);
+    }
+    // now have HWND
+
+    // find and create submonitor
+    FindSecondMonitor();
+    CreateSubMonitorWindow();
+    if (!CreateDeviceD3D(g_subHwnd)) {
+        std::cout << "[error] CreateDeviceD3D failed" << std::endl;
+        return 0;
+    }
+
+    // ImGui setup
+    ImGui_ImplWin32_EnableDpiAwareness();
+    float scale = ImGui_ImplWin32_GetDpiScaleForMonitor(
+        MonitorFromWindow(g_subHwnd, MONITOR_DEFAULTTONEAREST));
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    // load fonts
+    ImFontConfig font_cfg;
+    font_cfg.FontDataOwnedByAtlas = false;
+    ImFont* font = io.Fonts->AddFontFromMemoryCompressedTTF(
+        (void*)DF_POPMIX_W5_compressed_data,
+        DF_POPMIX_W5_compressed_size,
+        20.0f,
+        &font_cfg
+    );
+    ImFont* seg16 = io.Fonts->AddFontFromMemoryCompressedTTF(
+        (void*)SEG16_compressed_data,
+        SEG16_compressed_size,
+        200.0f,
+        &font_cfg
+    );
+    io.FontDefault = font;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_IsTouchScreen;
+
+    ImGui::StyleColorsDark();
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.ScaleAllSizes(scale);
+    style.FontScaleDpi = scale;
+
+    ImGui_ImplWin32_Init(g_subHwnd);
+    ImGui_ImplDX9_Init(g_pd3dDevice);
+
+    // load texture
+    IDirect3DTexture9* texture = nullptr;
+    int texW = 0, texH = 0;
+    const char* tex_path = "C:\\Users\\bemani\\Desktop\\iidx_btools_subscreen\\assets\\12.png";
+    assert(LoadTextureFromFile(g_pd3dDevice, tex_path, &texture, &texW, &texH));
+    static int effector_vals[5] = { 7,7,7,0,0 };
+
+    // message + render loop
+    MSG msg;
+    while (true)
+    {
+        while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+        {
+            if (msg.message == WM_QUIT)
+                goto cleanup;
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+
+        if (g_DeviceLost)
+        {
+            HRESULT hr = g_pd3dDevice->TestCooperativeLevel();
+            if (hr == D3DERR_DEVICELOST) { Sleep(10); continue; }
+            if (hr == D3DERR_DEVICENOTRESET) ResetDevice();
+            g_DeviceLost = false;
+        }
+        if (g_ResizeWidth || g_ResizeHeight)
+        {
+            g_d3dpp.BackBufferWidth = g_ResizeWidth;
+            g_d3dpp.BackBufferHeight = g_ResizeHeight;
+            g_ResizeWidth = g_ResizeHeight = 0;
+            ResetDevice();
+        }
+
+        ImGui_ImplDX9_NewFrame();
+        ImGui_ImplWin32_NewFrame();
+        ImGui::NewFrame();
+
+        // draw your UI (copy from original main)
+        ImGui::ShowDemoWindow();
+        ImGui::PushFont(seg16);
+        // ... ticker, widgets, etc.
+        ImGui::PopFont();
+        ImGui::EndFrame();
+
+        // render
+        g_pd3dDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
+        g_pd3dDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+        g_pd3dDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
+        g_pd3dDevice->Clear(
+            0, nullptr,
+            D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER,
+            D3DCOLOR_RGBA(114, 140, 153, 255),
+            1.0f, 0);
+        if (g_pd3dDevice->BeginScene() >= 0)
+        {
+            ImGui::Render();
+            ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
+            g_pd3dDevice->EndScene();
+        }
+        HRESULT result = g_pd3dDevice->Present(nullptr, nullptr, nullptr, nullptr);
+        if (result == D3DERR_DEVICELOST) g_DeviceLost = true;
+    }
+
+cleanup:
+    ImGui_ImplDX9_Shutdown();
+    ImGui_ImplWin32_Shutdown();
+    ImGui::DestroyContext();
+    CleanupDeviceD3D();
+    DestroyWindow(g_subHwnd);
+    UnregisterClass(SUB_CLASS, GetModuleHandle(nullptr));
+    // restore game window proc
+    SetWindowLongPtr(g_gameHwnd, GWLP_WNDPROC, (LONG_PTR)g_origGameProc);
+    return 0;
+}
+
+//-----------------------------------------------------------------------------
+// DLL entry: spawn our thread
+BOOL APIENTRY DllMain(HMODULE hModule,
+    DWORD  ul_reason_for_call,
+    LPVOID /*lpReserved*/)
+{
+    switch (ul_reason_for_call)
+    {
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls(hModule);
+        AllocConsole();
+        FILE* file;
+        freopen_s(&file, "CONOUT$", "w", stdout);
+        freopen_s(&file, "CONOUT$", "w", stderr);
+        std::cout << "[dll] Console ready" << std::endl;
+        CreateThread(nullptr, 0, MainThread, nullptr, 0, nullptr);
+        break;
+    case DLL_PROCESS_DETACH:
+        break;
+    }
+    return TRUE;
+}
+#endif

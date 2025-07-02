@@ -1,8 +1,9 @@
-﻿#include <d3d9.h>
-#include <tchar.h>
+﻿#include <tchar.h>
 #include <cstdio>
-#include <windowsx.h>
 #include <string>
+
+#include <windowsx.h>
+#include <d3d9.h>
 
 #include "imgui.h"
 #include "imgui_internal.h"
@@ -12,6 +13,8 @@
 #include "assets.hpp"
 #include "style.hpp"
 #include "widgets.hpp"
+#include "textures.hpp"
+
 
 
 // Data
@@ -27,7 +30,7 @@ void CleanupDeviceD3D();
 void ResetDevice();
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-int main(int, char**)
+int main2(int, char**)
 {
     ImGui_ImplWin32_EnableDpiAwareness();
     float scale = ImGui_ImplWin32_GetDpiScaleForMonitor(::MonitorFromPoint(POINT{ 0, 0 }, MONITOR_DEFAULTTOPRIMARY));
@@ -55,7 +58,6 @@ int main(int, char**)
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
 
-    // Load your embedded font as the only font
     ImFontConfig font_cfg;
     font_cfg.FontDataOwnedByAtlas = false;
     ImFont* font = io.Fonts->AddFontFromMemoryCompressedTTF(
@@ -65,13 +67,12 @@ int main(int, char**)
         &font_cfg
     );
 
-    //ImFont* font_big = io.Fonts->AddFontFromMemoryCompressedTTF(
-    //    (void*)DF_POPMIX_W5_compressed_data,
-    //    DF_POPMIX_W5_compressed_size,
-    //    50.0f,
-    //    &font_cfg
-    //);
-
+    ImFont* seg16 = io.Fonts->AddFontFromMemoryCompressedTTF(
+        (void*)SEG16_compressed_data,
+        SEG16_compressed_size,
+        200.0f,
+        &font_cfg
+    );
 
     // Set the font explicitly (optional — it’ll be the default if it’s the first font added)
     io.FontDefault = font;
@@ -79,6 +80,15 @@ int main(int, char**)
     // Enable keyboard/gamepad navigation
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_IsTouchScreen;
+
+    IDirect3DTexture9* texture = nullptr;
+    int g_texWidth = 0;
+    int g_texHeight = 0;
+
+    const char* tex_path = "C:\\Users\\bemani\\Desktop\\iidx_btools_subscreen\\assets\\12.png";
+    
+    assert(LoadTextureFromFile(g_pd3dDevice, tex_path, &texture, &g_texWidth, &g_texHeight));
+
 
     // Style setup
     ImGui::StyleColorsDark();
@@ -123,55 +133,56 @@ int main(int, char**)
         ImGui_ImplDX9_NewFrame();
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
+        ImVec2 displaySize = io.DisplaySize;
+
+        //// Draw the background full-screen quad
+        //ImDrawList* bg = ImGui::GetBackgroundDrawList();
+        //bg->AddImage(
+        //    (ImTextureID)(intptr_t)texture,       // your D3D9 texture
+        //    ImVec2(0, 0),                         // top‐left
+        //    ImVec2(displaySize.x, displaySize.y),// bottom‐right
+        //    ImVec2(0, 0),                         // UV0
+        //    ImVec2(1, 1),                         // UV1
+        //    IM_COL32_WHITE                       // tint (no change)
+        //);
 
 
         ImGui::ShowDemoWindow();
+        ImGui::PushFont(seg16);
 
+
+        ImVec2 ticker_sz = ImGui::CalcTextSize("⌓⌓⌓⌓⌓⌓⌓⌓⌓");
         ImVec2 spacing = ImGui::GetStyle().ItemSpacing;
         ImVec2 window_padding = ImGui::GetStyle().WindowPadding;
-        ImVec2 w_size = {
-            s.effector_width * 5 + 4 * spacing.x + 2 * window_padding.x,
-            s.effector_height + window_padding.y
-        };
         ImGuiViewport* main_viewport = ImGui::GetMainViewport();
         ImVec2 view_sz = main_viewport->Size;
+
+        ImVec2 ticker_w_sz = {
+            ticker_sz.x + window_padding.x * 2.f,
+            ticker_sz.y + window_padding.y * 2.f
+        };
+
+        ImGui::SetNextWindowSize(ticker_w_sz);
         ImGui::SetNextWindowPos({
-            (view_sz.x - w_size.x) * 0.5f,
-            (view_sz.y - w_size.y) * 0.8f
+            (view_sz.x - ticker_w_sz.x) * 0.5f,
+            0.f
         });
-        ImGui::SetNextWindowSize(w_size);
-        ImGui::Begin("vefex_panel", nullptr,
-            ImGuiWindowFlags_NoTitleBar
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.13f, 0.13f, 0.13f, 1.f));
+
+        ImGui::Begin("16seg", nullptr, ImGuiWindowFlags_NoTitleBar
             | ImGuiWindowFlags_NoResize
             | ImGuiWindowFlags_NoMove
-            | ImGuiWindowFlags_NoScrollbar
-            | ImGuiWindowFlags_NoBackground
-        );
-            ImGui::PushID(0);
-                EffectorFader("VEFX", "エフェクトの程度", &effector_vals[0], 2);
-                ImGui::SameLine();
-            ImGui::PopID();
+            | ImGuiWindowFlags_NoScrollbar);
 
-            ImGui::PushID(1);
-                EffectorFader("low-EQ", "低音域", &effector_vals[1], 2);
-                ImGui::SameLine();
-            ImGui::PopID();
-
-            ImGui::PushID(2);
-                EffectorFader("hi-EQ", "高音域", &effector_vals[2], 2);
-                ImGui::SameLine();
-            ImGui::PopID();
-
-            ImGui::PushID(3);
-                EffectorFader("filter", "フィルター設定", &effector_vals[3], 0);
-                ImGui::SameLine();
-            ImGui::PopID();
-
-            ImGui::PushID(4);
-                EffectorFader("play volume", "ボリューム設定", &effector_vals[4], 0);
-                ImGui::SameLine();
-            ImGui::PopID();
+        ImVec2 start = ImGui::GetCursorPos();
+        ImGui::TextColored({ 0.15f, 0.15f, 0.15f, 1.f }, "⌓⌓⌓⌓⌓⌓⌓⌓⌓");
+        ImGui::SetCursorPos(start + ImVec2{-1.f, 0.f});
+        ImGui::TextColored({ 0.8f, 0.0f, 0.0f, 1.f}, "BEATMANIA");
+        ImGui::PopFont();
         ImGui::End();
+        ImGui::PopStyleColor(1);
+
+        Effector(effector_vals);
 
         Keypad(0);
         Keypad(1);
@@ -277,3 +288,141 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
     return ::DefWindowProcW(hWnd, msg, wParam, lParam);
 }
+
+
+
+
+
+//=======================================================================================
+
+
+
+
+
+
+#include <cstring>
+#include <iostream>
+
+static HWND hwnd_submon = nullptr, hwnd_iidx = nullptr;
+static HMONITOR hmon_submon = nullptr;
+static WNDCLASSEXW wc = {
+    sizeof(wc),
+    CS_CLASSDC,
+    WndProc,
+    0L,
+    0L,
+    GetModuleHandle(nullptr),
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    L"CLS_BM2DX_BI2X_SUBMONITOR",
+    nullptr
+};
+
+static const char* bm2dx_class_prefix[] = {
+    "beatmaniaIIDX",
+    "beatmania IIDX",
+};
+
+#define SUBMON_WIDTH  1920
+#define SUBMON_HEIGHT 1080
+
+struct CTX_FINDMONITOR {
+    HMONITOR gameMonitor;
+    HMONITOR targetMonitor;
+};
+
+static BOOL CALLBACK WindowEnumProcFind(HWND hwnd, LPARAM lParam) {
+    auto data = reinterpret_cast<HWND*>(lParam);
+    char className[256] = { 0 };
+
+    if (GetClassNameA(hwnd, className, sizeof(className))) {
+        bool is_match = false;
+        if (!strcmp("C02", className)) {
+            is_match = true;
+            //iidx_slider_type = 1;
+        }
+        else {
+            for (int i = 0; i < _countof(bm2dx_class_prefix) && !is_match; i++) {
+                if (!strncmp(bm2dx_class_prefix[i], className, strlen(bm2dx_class_prefix[i]))) {
+                    is_match = true;
+                    //iidx_slider_type = 1;
+                }
+            }
+        }
+
+        // Add MAME emulator check if want to use on Twinkle games
+        // And because only old styles(1st - 8th) uses "track volume" instead of "filter" effector
+        // that conviently only runs under MAME(by far) we can set the silder type here as 0
+        if (!is_match && !strcmp("MAME", className)) {
+            is_match = true;
+            //iidx_slider_type = 0;
+        }
+
+        if (is_match) {
+            printf("Found game window '%s'\n", className);
+            *data = hwnd;
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+
+static BOOL CALLBACK MonitorEnumProcGet(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) {
+    auto target = reinterpret_cast<CTX_FINDMONITOR*>(dwData);
+    if (hMonitor != target->gameMonitor) {
+        target->targetMonitor = hMonitor;
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static BOOL CALLBACK MonitorEnumProcCount(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) {
+    auto c = reinterpret_cast<int*>(dwData);
+    *c += 1;
+    return TRUE;
+}
+#if 1
+int main() {
+    int init_retry = 10;
+    HWND game_window = NULL;
+
+    while (init_retry-- > 0) {
+        game_window = NULL;
+        EnumWindows(WindowEnumProcFind, reinterpret_cast<LPARAM>(&game_window));
+        if (game_window) {
+            break;
+        }
+        Sleep(1000);
+    }
+
+    if (!game_window) {
+        printf("Cannot find game window after 10 seconds...\n");
+        return -100;
+    }
+
+    RECT rect;
+    if (GetWindowRect(game_window, &rect)) {
+        HMONITOR hmon = MonitorFromRect(&rect, MONITOR_DEFAULTTONEAREST);
+        if (hmon) {
+            CTX_FINDMONITOR find;
+            find.targetMonitor = NULL;
+            find.gameMonitor = hmon;
+
+            EnumDisplayMonitors(nullptr, nullptr, MonitorEnumProcGet, reinterpret_cast<LPARAM>(&find));
+
+            hmon_submon = find.targetMonitor;
+        }
+    }
+
+    std::cout << "hmon_submon = " << hmon_submon << std::endl;
+
+
+    int nr_monitor = 0;
+    EnumDisplayMonitors(nullptr, nullptr, MonitorEnumProcCount, reinterpret_cast<LPARAM>(&nr_monitor));
+
+    std::cout << "nr_monitor = " << nr_monitor << std::endl;
+}
+#endif

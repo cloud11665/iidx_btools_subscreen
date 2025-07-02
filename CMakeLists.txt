@@ -27,20 +27,23 @@ file(GLOB IMGUI_CORE
 
 set(IMGUI_BACKENDS
     libs/imgui/imgui_impl_win32.cpp
-    libs/imgui/imgui_impl_dx9.cpp
+    libs/imgui/imgui_impl_dx11.cpp
 )
 
 # Application source
 set(SRC
     src/main.cpp
     src/widgets.cpp
+    src/textures.cpp
 )
 
 # === Embed font using binary_to_compressed_c ===
-set(FONT_INPUT   "${CMAKE_CURRENT_SOURCE_DIR}/assets/df-popmix-w5.ttc")
-set(FONT_OUTPUT  "${CMAKE_CURRENT_BINARY_DIR}/df_popmix_w5_compressed.c")
-# Symbol name for the embedded array (must be a valid C identifier)
-set(FONT_SYMBOL  "DF_POPMIX_W5")
+set(FONT_INPUT  "${CMAKE_CURRENT_SOURCE_DIR}/assets/df-popmix-w5.ttc")
+set(FONT_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/df_popmix_w5_compressed.c")
+set(FONT_SYMBOL "DF_POPMIX_W5")
+set(FONT_INPUT_16SEG    "${CMAKE_CURRENT_SOURCE_DIR}/assets/16Segments-Basic.otf")
+set(FONT_OUTPUT_16SEG   "${CMAKE_CURRENT_BINARY_DIR}/16seg_compressed.c")
+set(FONT_SYMBOL_16SEG   "SEG16")
 
 # 1) Build the embed tool
 add_executable(embed_tool
@@ -55,44 +58,75 @@ set_target_properties(embed_tool PROPERTIES
 add_custom_command(
     OUTPUT ${FONT_OUTPUT}
     COMMAND $<TARGET_FILE:embed_tool> -nostatic "${FONT_INPUT}" "${FONT_SYMBOL}" > "${FONT_OUTPUT}"
+    COMMAND $<TARGET_FILE:embed_tool> -nostatic "${FONT_INPUT_16SEG}" "${FONT_SYMBOL_16SEG}" > "${FONT_OUTPUT_16SEG}"
     DEPENDS embed_tool
             ${FONT_INPUT}
+            ${FONT_INPUT_16SEG}
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT ">> Embedding and compressing ${FONT_INPUT} as ${FONT_SYMBOL}"
     VERBATIM
 )
 
-set_source_files_properties(${FONT_OUTPUT} PROPERTIES GENERATED TRUE)
+set_source_files_properties(${FONT_OUTPUT} ${FONT_OUTPUT_16SEG} PROPERTIES GENERATED TRUE)
 
 
 
-# === Build the main executable ===
-add_executable(${PROJECT_NAME}
-  ${SRC}
-  ${IMGUI_CORE}
-  ${IMGUI_BACKENDS}
-  ${FONT_OUTPUT}
+add_library(backend SHARED
+    src/backend.cpp
+    src/widgets.cpp
+    src/textures.cpp
+    ${IMGUI_CORE}
+    ${IMGUI_BACKENDS}
+    ${FONT_OUTPUT}
+    ${FONT_OUTPUT_16SEG}
 )
-
-# Make sure embed_tool runs before compiling the generated font
-add_dependencies(${PROJECT_NAME} embed_tool)
-
-target_include_directories(${PROJECT_NAME} PRIVATE
+add_dependencies(backend embed_tool)
+target_include_directories(backend PRIVATE
     libs/imgui
+    libs/
     src/
-    ${CMAKE_CURRENT_BINARY_DIR}  # to find generated .c
+    ${CMAKE_CURRENT_BINARY_DIR}
 )
-
-target_link_libraries(${PROJECT_NAME} PRIVATE
-    d3d9
+target_link_libraries(backend PRIVATE
+    d3d11
     user32
     gdi32
     winmm
 )
 
+
+# === Build the main executable ===
+#add_executable(${PROJECT_NAME}
+#  ${SRC}
+#  ${IMGUI_CORE}
+#  ${IMGUI_BACKENDS}
+#  ${FONT_OUTPUT}
+#  ${FONT_OUTPUT_16SEG}
+#)
+
+# Make sure embed_tool runs before compiling the generated font
+#add_dependencies(${PROJECT_NAME} embed_tool)
+
+#target_include_directories(${PROJECT_NAME} PRIVATE
+#    libs/imgui
+#    libs/
+#    src/
+#    ${CMAKE_CURRENT_BINARY_DIR}  # to find generated .c
+#)
+
+#target_link_libraries(${PROJECT_NAME} PRIVATE
+#    d3d9
+#    user32
+#    gdi32
+#    winmm
+#)
+
 # Clean generated file when "make clean" or "ninja clean" is invoked
 set_directory_properties(PROPERTIES 
     ADDITIONAL_MAKE_CLEAN_FILES "${FONT_OUTPUT}"
+)
+set_directory_properties(PROPERTIES 
+    ADDITIONAL_MAKE_CLEAN_FILES "${FONT_OUTPUT_16SEG}"
 )
 
 # IDE filters (e.g. Visual Studio)

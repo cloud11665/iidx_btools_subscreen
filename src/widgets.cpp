@@ -90,6 +90,54 @@ void EffectorFader(const char* text_top, const char* text_bottom, int* value, in
     ImGui::EndChild();
 }
 
+void Effector(int effector_vals[5]) {
+    ImVec2 spacing = ImGui::GetStyle().ItemSpacing;
+    ImVec2 window_padding = ImGui::GetStyle().WindowPadding;
+    ImVec2 w_size = {
+        s.effector_width * 5 + 4 * spacing.x + 2 * window_padding.x,
+        s.effector_height + window_padding.y
+    };
+    ImGuiViewport* main_viewport = ImGui::GetMainViewport();
+    ImVec2 view_sz = main_viewport->Size;
+    ImGui::SetNextWindowPos({
+        (view_sz.x - w_size.x) * 0.5f,
+        (view_sz.y - w_size.y) * 0.8f
+        });
+    ImGui::SetNextWindowSize(w_size);
+    ImGui::Begin("vefex_panel", nullptr,
+        ImGuiWindowFlags_NoTitleBar
+        | ImGuiWindowFlags_NoResize
+        | ImGuiWindowFlags_NoMove
+        | ImGuiWindowFlags_NoScrollbar
+        | ImGuiWindowFlags_NoBackground
+    );
+    ImGui::PushID(0);
+    EffectorFader("VEFX", "エフェクトの程度", &effector_vals[0], 2);
+    ImGui::SameLine();
+    ImGui::PopID();
+
+    ImGui::PushID(1);
+    EffectorFader("low-EQ", "低音域", &effector_vals[1], 2);
+    ImGui::SameLine();
+    ImGui::PopID();
+
+    ImGui::PushID(2);
+    EffectorFader("hi-EQ", "高音域", &effector_vals[2], 2);
+    ImGui::SameLine();
+    ImGui::PopID();
+
+    ImGui::PushID(3);
+    EffectorFader("filter", "フィルター設定", &effector_vals[3], 0);
+    ImGui::SameLine();
+    ImGui::PopID();
+
+    ImGui::PushID(4);
+    EffectorFader("play volume", "ボリューム設定", &effector_vals[4], 0);
+    ImGui::SameLine();
+    ImGui::PopID();
+    ImGui::End();
+}
+
 int32_t Keypad(int side) {
     ImVec2 spacing = ImGui::GetStyle().ItemSpacing;
     ImVec2 window_padding = ImGui::GetStyle().WindowPadding;
