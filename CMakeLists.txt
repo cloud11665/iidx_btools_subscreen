@@ -69,10 +69,11 @@ add_custom_command(
 
 set_source_files_properties(${FONT_OUTPUT} ${FONT_OUTPUT_16SEG} PROPERTIES GENERATED TRUE)
 
+#add_compile_definitions(UNICODE _UNICODE)
 
 
 add_library(backend SHARED
-    src/backend.cpp
+    "src/backend.cpp"
     src/widgets.cpp
     src/textures.cpp
     ${IMGUI_CORE}
