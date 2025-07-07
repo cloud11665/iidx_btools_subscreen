@@ -111,30 +111,30 @@ void Effector(int effector_vals[5]) {
         | ImGuiWindowFlags_NoScrollbar
         | ImGuiWindowFlags_NoBackground
     );
-    ImGui::PushID(0);
-    EffectorFader("VEFX", "エフェクトの程度", &effector_vals[0], 2);
-    ImGui::SameLine();
-    ImGui::PopID();
+        ImGui::PushID(0);
+            EffectorFader("VEFX", "エフェクトの程度", &effector_vals[0], 2);
+            ImGui::SameLine();
+        ImGui::PopID();
 
-    ImGui::PushID(1);
-    EffectorFader("low-EQ", "低音域", &effector_vals[1], 2);
-    ImGui::SameLine();
-    ImGui::PopID();
+        ImGui::PushID(1);
+            EffectorFader("low-EQ", "低音域", &effector_vals[1], 2);
+            ImGui::SameLine();
+        ImGui::PopID();
 
-    ImGui::PushID(2);
-    EffectorFader("hi-EQ", "高音域", &effector_vals[2], 2);
-    ImGui::SameLine();
-    ImGui::PopID();
+        ImGui::PushID(2);
+            EffectorFader("hi-EQ", "高音域", &effector_vals[2], 2);
+            ImGui::SameLine();
+        ImGui::PopID();
 
-    ImGui::PushID(3);
-    EffectorFader("filter", "フィルター設定", &effector_vals[3], 0);
-    ImGui::SameLine();
-    ImGui::PopID();
+        ImGui::PushID(3);
+            EffectorFader("filter", "フィルター設定", &effector_vals[3], 0);
+            ImGui::SameLine();
+        ImGui::PopID();
 
-    ImGui::PushID(4);
-    EffectorFader("play volume", "ボリューム設定", &effector_vals[4], 0);
-    ImGui::SameLine();
-    ImGui::PopID();
+        ImGui::PushID(4);
+            EffectorFader("play volume", "ボリューム設定", &effector_vals[4], 0);
+            ImGui::SameLine();
+        ImGui::PopID();
     ImGui::End();
 }
 
@@ -224,4 +224,44 @@ int32_t Keypad(int side) {
     ImGui::PopFont();
 
     return -1;
+}
+
+void Ticker16seg(const char* text)
+{
+    char text_data[10] = { 0 };
+    memset(text_data, ' ', 9);
+    strncpy(text_data, text, 9);
+    ImGui::PushFont(s.font_seg16);
+
+    ImVec2 ticker_sz = ImGui::CalcTextSize("⌓⌓⌓⌓⌓⌓⌓⌓⌓");
+    ImVec2 spacing = ImGui::GetStyle().ItemSpacing;
+    ImVec2 window_padding = ImGui::GetStyle().WindowPadding;
+    ImGuiViewport* main_viewport = ImGui::GetMainViewport();
+    ImVec2 view_sz = main_viewport->Size;
+
+    ImVec2 ticker_w_sz = {
+        ticker_sz.x + window_padding.x * 2.f,
+        ticker_sz.y + window_padding.y * 2.f
+    };
+
+    ImGui::SetNextWindowSize(ticker_w_sz);
+    ImGui::SetNextWindowPos({
+        (view_sz.x - ticker_w_sz.x) * 0.5f,
+        0.f
+    });
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.13f, 0.13f, 0.13f, 1.f));
+
+    ImGui::Begin("16seg", nullptr, ImGuiWindowFlags_NoTitleBar
+        | ImGuiWindowFlags_NoResize
+        | ImGuiWindowFlags_NoMove
+        | ImGuiWindowFlags_NoScrollbar);
+
+        ImVec2 start = ImGui::GetCursorPos();
+        ImGui::TextColored({ 0.15f, 0.15f, 0.15f, 1.f }, "⌓⌓⌓⌓⌓⌓⌓⌓⌓");
+        ImGui::SetCursorPos(start + ImVec2{ -1.f, 0.f });
+        ImGui::TextColored({ 0.8f, 0.0f, 0.0f, 1.f }, text_data);
+    ImGui::End();
+    
+    ImGui::PopFont();
+    ImGui::PopStyleColor(1);
 }

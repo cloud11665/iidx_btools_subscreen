@@ -70,7 +70,7 @@ struct eam_io_config_api;
    with four function pointers that may be used to log messages to the game's
    log file. See comments in glue.h for further information. */
 
-void eam_io_set_loggers(
+__declspec(dllexport) void eam_io_set_loggers(
     log_formatter_t misc,
     log_formatter_t info,
     log_formatter_t warning,
@@ -84,14 +84,14 @@ void eam_io_set_loggers(
 
    See glue.h and geninput.h for further details. */
 
-bool eam_io_init(
+__declspec(dllexport) bool eam_io_init(
     thread_create_t thread_create,
     thread_join_t thread_join,
     thread_destroy_t thread_destroy);
 
 /* Shut down your card reader emulation DLL. */
 
-void eam_io_fini(void);
+__declspec(dllexport) void eam_io_fini(void);
 
 /* Return the state of the number pad on your reader. This function will be
    called frequently. See enum eam_io_keypad_scan_code above for the meaning of
@@ -103,35 +103,35 @@ void eam_io_fini(void);
    unit_no is either 0 or 1. Games with only a single reader (jubeat, popn,
    drummania) will only use unit_no 0. */
 
-uint16_t eam_io_get_keypad_state(uint8_t unit_no);
+__declspec(dllexport) uint16_t eam_io_get_keypad_state(uint8_t unit_no);
 
 /* Indicate which sensors (front and back) are triggered for a slotted reader
    (refer to enum). To emulate non-slotted readers, just set both sensors
    to on to indicate the card is in range of the reader. This function
    will be called frequently. */
 
-uint8_t eam_io_get_sensor_state(uint8_t unit_no);
+__declspec(dllexport) uint8_t eam_io_get_sensor_state(uint8_t unit_no);
 
 /* Read a card ID. This function is only called when the return value of
    eam_io_get_sensor_state() changes from false to true, so you may take your
    time and perform file I/O etc, within reason. You must return exactly eight
    bytes into the buffer pointed to by card_id. */
 
-uint8_t eam_io_read_card(uint8_t unit_no, uint8_t* card_id, uint8_t nbytes);
+__declspec(dllexport) uint8_t eam_io_read_card(uint8_t unit_no, uint8_t* card_id, uint8_t nbytes);
 
 /* Send a command to the card slot. This is called by the game to execute
    certain actions on a slotted reader (refer to enum). When emulating
    wave pass readers, this is function is never called. */
 
-bool eam_io_card_slot_cmd(uint8_t unit_no, uint8_t cmd);
+__declspec(dllexport) bool eam_io_card_slot_cmd(uint8_t unit_no, uint8_t cmd);
 
 /* This function is called frequently. Update your device and states in here */
 
-bool eam_io_poll(uint8_t unit_no);
+__declspec(dllexport) bool eam_io_poll(uint8_t unit_no);
 
 /* Return a pointer to an internal configuration API for use by config.exe.
    Custom implementations should return NULL. */
 
-const struct eam_io_config_api* eam_io_get_config_api(void);
+__declspec(dllexport) const struct eam_io_config_api* eam_io_get_config_api(void);
 
 #endif

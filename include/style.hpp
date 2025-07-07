@@ -31,6 +31,8 @@ struct StyleConfig {
 	float    keypad_padding = 20.f;
 	float    keypad_font_size = 60.f;
 	float    keypad_font_size_tiny = 22.f;
+
+	ImFont* font_seg16 = nullptr;
 };
 
 inline StyleConfig s;
