@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <mutex>
 #include <cstring>
+#include <thread>
+#include <chrono>
 
 #include "api.hpp"
 #include "globals.hpp"
@@ -12,6 +14,22 @@ static void add_event(BtoolsEvent e)
     g_btools_equeue.push_front(e);
     if (g_btools_equeue.size() > g_btools_equeue_maxsz)
         g_btools_equeue.pop_back();
+}
+
+static void resert_card(uint8_t unit_no)
+{
+    using namespace std::chrono_literals;
+
+    auto t = std::thread([unit_no] {
+        std::this_thread::sleep_for(5s);
+        std::lock_guard<std::mutex> lock(g_eamio_card_mutex);
+        if (unit_no == 0)
+            g_eamio_card_p1.reset();
+        else
+            g_eamio_card_p2.reset();
+    });
+
+    t.detach();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -89,13 +107,7 @@ extern "C" __declspec(dllexport) uint8_t backend_eamio_get_sensor_state(
     });
     std::lock_guard<std::mutex> lock(g_eamio_card_mutex);
 
-    if (unit_no == 0)
-        return g_eamio_card_p1.has_value();
-
-    if (unit_no == 1)
-        return g_eamio_card_p2.has_value();
-
-    return 0;
+    return unit_no == 0 ? g_eamio_sensor_p1 : g_eamio_sensor_p2;
 }
 
 extern "C" __declspec(dllexport) uint8_t backend_eamio_read_card(
@@ -134,6 +146,7 @@ extern "C" __declspec(dllexport) uint8_t backend_eamio_read_card(
         return EAM_IO_CARD_NONE;
 
     std::copy(card_data.begin(), card_data.end(), card_id);
+    resert_card(unit_no);
 
     if (card_data[0] == 0xe0 && card_data[1] == 0x04) {
         return EAM_IO_CARD_ISO15696;
@@ -153,7 +166,29 @@ extern "C" __declspec(dllexport) uint8_t backend_eamio_card_slot_cmd(
         .unit_no = unit_no,
         .cmd = cmd
     });
-    return 0;
+    std::lock_guard<std::mutex> lock(g_eamio_card_mutex);
+
+    uint8_t* state = unit_no == 0 ? &g_eamio_sensor_p1 : &g_eamio_sensor_p2;
+    bool inserted = unit_no == 0 ? g_eamio_card_p1.has_value() : g_eamio_card_p2.has_value();
+
+    switch (cmd) {
+    case EAM_IO_CARD_SLOT_CMD_CLOSE:
+        *state = 0x00;
+        break;
+    case EAM_IO_CARD_SLOT_CMD_OPEN:
+        *state = inserted ? 0x03 : 0x00;
+        break;
+    case EAM_IO_CARD_SLOT_CMD_EJECT:
+        *state = 0x00;
+        break;
+    case EAM_IO_CARD_SLOT_CMD_READ:
+        *state = inserted ? 0x03 : 0x00;
+        break;
+    default:
+        break;
+    }
+
+    return 1;
 }
 
 extern "C" __declspec(dllexport) uint8_t backend_eamio_poll(
@@ -164,5 +199,12 @@ extern "C" __declspec(dllexport) uint8_t backend_eamio_poll(
         .tag = BtoolsEventTag::EAMIO_POLL,
         .unit_no = unit_no
     });
-    return 0;
+    std::lock_guard<std::mutex> lock(g_eamio_card_mutex);
+
+    if (unit_no == 0)
+        g_eamio_sensor_p1 = g_eamio_card_p1.has_value() ? 0x03 : 0x00;
+    if (unit_no == 1)
+        g_eamio_sensor_p2 = g_eamio_card_p2.has_value() ? 0x03 : 0x00;
+
+    return 1;
 }

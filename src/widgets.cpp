@@ -84,6 +84,7 @@ void EffectorFader(const char* text_top, const char* text_bottom, int* value, in
                 0, 14
             );
         }
+
         // draw fader
         dl->AddRectFilled(faderTL, faderBR, s.effector_fader_color);
 

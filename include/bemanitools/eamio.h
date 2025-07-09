@@ -110,7 +110,7 @@ __declspec(dllexport) uint16_t eam_io_get_keypad_state(uint8_t unit_no);
    to on to indicate the card is in range of the reader. This function
    will be called frequently. */
 
-__declspec(dllexport) uint8_t eam_io_get_sensor_state(uint8_t unit_no);
+__declspec(dllexport) uint8_t backend_eamio_get_sensor_state(uint8_t unit_no);
 
 /* Read a card ID. This function is only called when the return value of
    eam_io_get_sensor_state() changes from false to true, so you may take your

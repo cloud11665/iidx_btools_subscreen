@@ -18,6 +18,13 @@
 #include <algorithm>
 #include <utility>
 
+extern "C"
+{
+#include "bemanitools/glue.h"
+#include "bemanitools/vefxio.h"
+#include "bemanitools/eamio.h"
+}
+
 using card_data_t = std::array<uint8_t, 8>;
 using touchpoint_t = std::pair<DWORD, POINTER_INFO>;
 
@@ -34,10 +41,10 @@ inline RECT						g_iidx_rect{};
 inline CHAR						g_iidx_name[256] = { 0 };
 
 // ------------------------------- input --------------------------------------
-inline int						g_touch_event_count{ 0 };
+inline std::atomic_int32_t      g_touch_event_count{ 0 };
 inline std::mutex				g_touchpoints_mutex;
 inline std::array<touchpoint_t, 4> g_touchpoints;
-inline int						g_updates_captured{ 0 };
+inline std::atomic_int32_t      g_updates_captured{ 0 };
 inline std::optional<float>		g_himetric_scale_x{ std::nullopt };
 inline std::optional<float>		g_himetric_scale_y{ std::nullopt };
 
@@ -95,6 +102,8 @@ inline int							g_vefxio_effector_state[5] = { 7, 7, 7, 0, 0 };
 
 inline std::atomic_bool             g_eamio_enabled{ false };
 inline std::mutex                   g_eamio_card_mutex;
+inline uint8_t                      g_eamio_sensor_p1{ 0x03 };
+inline uint8_t                      g_eamio_sensor_p2{ 0x03 };
 inline std::optional<card_data_t>   g_eamio_card_p1{ std::nullopt };
 inline std::optional<card_data_t>   g_eamio_card_p2{ std::nullopt };
 inline std::mutex                   g_eamio_keypad_mutex;

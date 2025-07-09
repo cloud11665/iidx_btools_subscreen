@@ -44,8 +44,8 @@ int initialize(void* data)
 
     info_logger("iidx_submon_vefxio", "found backend module (%p)", (void*)g_backend);
     
-    backend_init = reinterpret_cast<backend_init_t>(::GetProcAddress(g_backend, "backend_vefxio_read_slider"));
-    info_logger("iidx_submon_vefxio", "found backend_vefxio_read_slider (%p)", (void*)backend_init);
+    backend_init = reinterpret_cast<backend_init_t>(::GetProcAddress(g_backend, "backend_vefxio_init"));
+    info_logger("iidx_submon_vefxio", "found backend_vefxio_init (%p)", (void*)backend_init);
 
     backend_write_16seg = reinterpret_cast<backend_write_16seg_t>(::GetProcAddress(g_backend, "backend_vefxio_write_16seg"));
     info_logger("iidx_submon_vefxio", "found backend_vefxio_write_16seg (%p)", (void*)backend_write_16seg);
