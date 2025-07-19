@@ -40,7 +40,7 @@ jobs:
           cmake --build . --config Release
 
       - name: Upload DLL artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: dll-artifacts
           path: |
