@@ -1,12 +1,13 @@
-name: Build C++ (MSVC) x86
+﻿name: Build C++ (MSVC) x86
 
 on:
   push:
     branches:
-      - main
+      - master
   pull_request:
     branches:
-      - main
+      - master
+  workflow_dispatch:
 
 jobs:
   build-win32:
@@ -16,33 +17,33 @@ jobs:
         shell: cmd
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Setup MSVC Environment
-      uses: microsoft/setup-msbuild@v1
-      with:
-        vs-version: 'latest'
+      - name: Setup MSVC Environment
+        uses: microsoft/setup-msbuild@v1
+        with:
+          vs-version: 'latest'
 
-    - name: Create build directory
-      run: |
-        if not exist build mkdir build
+      - name: Create build directory
+        run: |
+          if not exist build mkdir build
 
-    - name: Configure CMake
-      working-directory: build
-      run: |
-        cmake .. -G "Visual Studio 17 2022" -A Win32
+      - name: Configure CMake
+        working-directory: build
+        run: |
+          cmake .. -G "Visual Studio 17 2022" -A Win32
 
-    - name: Build solution
-      working-directory: build
-      run: |
-        cmake --build . --config Release
+      - name: Build solution
+        working-directory: build
+        run: |
+          cmake --build . --config Release
 
-    - name: Upload DLL artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: dll-artifacts
-        path: |
-          build/Release/backend.dll
-          build/Release/vefxio.dll
-          build/Release/eamio.dll
+      - name: Upload DLL artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: dll-artifacts
+          path: |
+            build/Release/backend.dll
+            build/Release/vefxio.dll
+            build/Release/eamio.dll
