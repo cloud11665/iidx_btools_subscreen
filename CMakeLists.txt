@@ -8,22 +8,24 @@ endif()
 
 project("iidx_btools_subscreen")
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
+#set(CMAKE_C_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+#set(CMAKE_C_STANDARD_REQUIRED ON)
 add_compile_options("/utf-8")
 
-set(CMAKE_CXX_FLAGS_DEBUG "/MD /Od")
-set(CMAKE_CXX_FLAGS_RELEASE "/MD /O2")
+#set(CMAKE_CXX_FLAGS_DEBUG "/MD /Od")
+#set(CMAKE_CXX_FLAGS_RELEASE "/MD /O2")
 
-include(assets/FontEmbed.cmake)
-# Clean generated file when "make clean" or "ninja clean" is invoked
-set_directory_properties(PROPERTIES 
-    ADDITIONAL_MAKE_CLEAN_FILES "${FONT_OUTPUT};${FONT_OUTPUT_16SEG}"
+set(ASSETS_RC
+  "${CMAKE_CURRENT_SOURCE_DIR}/assets/assets.rc"
+  "${CMAKE_CURRENT_SOURCE_DIR}/assets/resource_def.h"
 )
 
 # ImGui core and backends
 file(GLOB IMGUI_CORE
     libs/imgui/imgui.cpp
+    libs/imgui/imgui_stdlib.cpp
     libs/imgui/imgui_demo.cpp
     libs/imgui/imgui_draw.cpp
     libs/imgui/imgui_tables.cpp
@@ -34,18 +36,23 @@ file(GLOB IMGUI_CORE
 
 include_directories(
     "include/"
+    assets/
 )
 
 add_library(backend SHARED
     src/backend.cpp
+    src/aic.cpp
     src/api.cpp
     src/utils.cpp
     src/widgets.cpp
+    src/textures.cpp
+    src/resources.cpp
     ${IMGUI_CORE}
     ${FONT_OUTPUT}
     ${FONT_OUTPUT_16SEG}
 )
 
+target_sources(backend PRIVATE ${ASSETS_RC})
 
 target_link_libraries(backend
     d3d11
@@ -53,12 +60,14 @@ target_link_libraries(backend
     dxgi
     shcore
     Shlwapi
+    hid
+    SetupAPI
 )
 
-add_dependencies(backend embed_tool)
 target_include_directories(backend PRIVATE
     libs/imgui
     libs/
+    assets/
     ${CMAKE_CURRENT_BINARY_DIR}
 )
 
@@ -70,7 +79,6 @@ add_library(vefxio SHARED
 add_library(eamio SHARED
     src/eamio.cpp
 )
-
 
 #source_group("Source Files" FILES ${SRC})
 #source_group("ImGui\\Core"   FILES ${IMGUI_CORE})

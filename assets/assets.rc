@@ -1,0 +1,10 @@
+#include "windows.h"
+#include "resource_def.h"
+
+IDR_DF_POPMIX_W5 RCDATA "df-popmix-w5.ttc"
+IDR_16SEGMENTS   RCDATA "16Segments-Basic.otf"
+
+TEX_home		 RCDATA "icon_home.png"
+TEX_10key_mini	 RCDATA "icon_10key_mini.png"
+TEX_10key		 RCDATA "icon_10key.png"
+TEX_10key_close  RCDATA "icon_10key_close.png"

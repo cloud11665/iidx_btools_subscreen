@@ -33,6 +33,8 @@ struct StyleConfig {
 	float    keypad_font_size_tiny = 22.f;
 
 	ImFont* font_seg16 = nullptr;
+
+	ImColor  keypad_highlight_color = ImColor(256, 256, 256, 100);
 };
 
 inline StyleConfig s;

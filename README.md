@@ -1,1 +1,1 @@
-# vefexio + eamio subscreen for iidx 12-26
+# vefexio + eamio subscreen for iidx 12-24

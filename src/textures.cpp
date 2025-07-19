@@ -1,142 +1,74 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-#include <d3d9.h>
+#include <d3d11.h>
 
 #include <algorithm>
 
-//------------------------------------------------------------------------------
-// Loads an image from memory (PNG/JPEG/etc.) and creates a D3D9 texture.
-//   device      - your IDirect3DDevice9*
-//   data        - pointer to the image file in memory
-//   data_size   - size of that block in bytes
-//   out_texture - receives the new IDirect3DTexture9*
-//   out_width   - receives image width
-//   out_height  - receives image height
-//------------------------------------------------------------------------------
-bool LoadTextureFromMemory(
-    IDirect3DDevice9* device,
-    const void* data,
-    size_t                 data_size,
-    IDirect3DTexture9** out_texture,
-    int* out_width,
-    int* out_height)
+#include "globals.hpp"
+
+// Simple helper function to load an image into a DX11 texture with common settings
+bool LoadTextureFromMemory(const void* data, size_t data_size, ID3D11ShaderResourceView** out_srv, int* out_width, int* out_height)
 {
-    if (!device || !data || !out_texture || !out_width || !out_height)
+    // Load from disk into a raw RGBA buffer
+    int image_width = 0;
+    int image_height = 0;
+    unsigned char* image_data = stbi_load_from_memory((const unsigned char*)data, (int)data_size, &image_width, &image_height, NULL, 4);
+    if (image_data == NULL)
         return false;
 
-    // Decode with stb_image (force 4 channels: RGBA)
-    int w = 0, h = 0;
-    unsigned char* pixels = stbi_load_from_memory(
-        (const unsigned char*)data,
-        (int)data_size,
-        &w,
-        &h,
-        nullptr,
-        4
-    );
-    if (!pixels)
-        return false;
+    // Create texture
+    D3D11_TEXTURE2D_DESC desc;
+    ZeroMemory(&desc, sizeof(desc));
+    desc.Width = image_width;
+    desc.Height = image_height;
+    desc.MipLevels = 1;
+    desc.ArraySize = 1;
+    desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    desc.SampleDesc.Count = 1;
+    desc.Usage = D3D11_USAGE_DEFAULT;
+    desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    desc.CPUAccessFlags = 0;
 
-    for (int i = 0, n = w * h; i < n; ++i)
-    {
-        unsigned char* p = pixels + i * 4;
-        // p[0]=R, p[1]=G, p[2]=B, p[3]=A
-        std::swap(p[0], p[2]);  // now p is B G R A
-    }
+    ID3D11Texture2D* pTexture = NULL;
+    D3D11_SUBRESOURCE_DATA subResource;
+    subResource.pSysMem = image_data;
+    subResource.SysMemPitch = desc.Width * 4;
+    subResource.SysMemSlicePitch = 0;
+    g_dx11_dev->CreateTexture2D(&desc, &subResource, &pTexture);
 
-    // Create a managed texture in A8R8G8B8 format, no mipmaps:
-    IDirect3DTexture9* tex = nullptr;
-    HRESULT hr = device->CreateTexture(
-        w,
-        h,
-        1,                  // levels (no mips)
-        0,                  // usage
-        D3DFMT_A8R8G8B8,    // format
-        //D3DFMT_R8G8B8,    // format
-        D3DPOOL_MANAGED,    // pool
-        &tex,
-        nullptr
-    );
-    if (FAILED(hr) || !tex) {
-        stbi_image_free(pixels);
-        return false;
-    }
+    // Create texture view
+    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+    ZeroMemory(&srvDesc, sizeof(srvDesc));
+    srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MipLevels = desc.MipLevels;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+    g_dx11_dev->CreateShaderResourceView(pTexture, &srvDesc, out_srv);
+    pTexture->Release();
 
-    // Lock the top level and copy scanlines
-    D3DLOCKED_RECT rect;
-    hr = tex->LockRect(0, &rect, nullptr, 0);
-    if (FAILED(hr)) {
-        tex->Release();
-        stbi_image_free(pixels);
-        return false;
-    }
+    *out_width = image_width;
+    *out_height = image_height;
+    stbi_image_free(image_data);
 
-    // rect.Pitch may be >= width*4; copy row by row
-    for (int y = 0; y < h; ++y) {
-        memcpy(
-            (unsigned char*)rect.pBits + y * rect.Pitch,
-            pixels + y * w * 4,
-            w * 4
-        );
-    }
-
-    tex->UnlockRect(0);
-    stbi_image_free(pixels);
-
-    // Success—return values
-    *out_texture = tex;
-    *out_width = w;
-    *out_height = h;
     return true;
 }
 
-//------------------------------------------------------------------------------
-// Loads a file into memory and then calls the above.
-//------------------------------------------------------------------------------
-bool LoadTextureFromFile(
-    IDirect3DDevice9* device,
-    const char* filename,
-    IDirect3DTexture9** out_texture,
-    int* out_width,
-    int* out_height)
+// Open and read a file, then forward to LoadTextureFromMemory()
+bool LoadTextureFromFile(const char* file_name, ID3D11ShaderResourceView** out_srv, int* out_width, int* out_height)
 {
-    if (!device || !filename || !out_texture || !out_width || !out_height)
+    FILE* f = fopen(file_name, "rb");
+    if (f == NULL)
         return false;
-
-    FILE* f = fopen(filename, "rb");
-    if (!f)
-        return false;
-
     fseek(f, 0, SEEK_END);
-    long sz = ftell(f);
-    if (sz <= 0) {
-        fclose(f);
+    size_t file_size = (size_t)ftell(f);
+    if (file_size == -1)
         return false;
-    }
     fseek(f, 0, SEEK_SET);
-
-    unsigned char* file_data = (unsigned char*)malloc(sz);
-    if (!file_data) {
-        fclose(f);
-        return false;
-    }
-
-    size_t read = fread(file_data, 1, sz, f);
+    void* file_data = malloc(file_size);
+    fread(file_data, 1, file_size, f);
     fclose(f);
-    if (read != (size_t)sz) {
-        free(file_data);
-        return false;
-    }
-
-    bool ok = LoadTextureFromMemory(
-        device,
-        file_data,
-        sz,
-        out_texture,
-        out_width,
-        out_height
-    );
+    bool ret = LoadTextureFromMemory(file_data, file_size, out_srv, out_width, out_height);
     free(file_data);
-    return ok;
+    return ret;
 }

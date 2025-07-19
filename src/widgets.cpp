@@ -1,10 +1,18 @@
 ﻿#include <cassert>
 #include <string>
+#include <mutex>
+
 
 #include "imgui.h"
 #include "imgui_internal.h"
 
+#include <d3d11.h>
+
+#include "globals.hpp"
 #include "style.hpp"
+#include "widgets.hpp"
+
+#include "textures.hpp"
 
 void EffectorFader(const char* text_top, const char* text_bottom, int* value, int main_tick) {
     assert(0 <= *value && *value <= 14);
@@ -139,99 +147,11 @@ void Effector(int effector_vals[5]) {
     ImGui::End();
 }
 
-int32_t Keypad(int side) {
-    ImVec2 spacing = ImGui::GetStyle().ItemSpacing;
-    ImVec2 window_padding = ImGui::GetStyle().WindowPadding;
-    ImGuiViewport* main_viewport = ImGui::GetMainViewport();
-    ImVec2 view_sz = main_viewport->Size;
-
-    // calculate size...
-    ImVec2 keypad_sz = {
-        3 * s.keypad_unit_width + spacing.x * 2 + window_padding.x * 2,
-        4 * s.keypad_unit_width + spacing.x * 4 + window_padding.x * 1 + s.keypad_font_size_tiny
-    };
-    if (side == 0) {
-        ImGui::SetNextWindowPos({
-            s.keypad_padding,
-            view_sz.y - keypad_sz.y - s.keypad_padding
-            });
-    }
-    else {
-        ImGui::SetNextWindowPos({
-            view_sz.x - keypad_sz.x - s.keypad_padding,
-            view_sz.y - keypad_sz.y - s.keypad_padding
-            });
-    }
-    ImGui::SetNextWindowSize(keypad_sz);
-
-    // ——— Style setup ———
-    // semi-transparent gray window background
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.2f, 0.2f, 0.2f, 0.5f));
-    // white window border
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.0f);
-    ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-    ImGui::PushFont(nullptr, s.keypad_font_size);
-
-    ImGui::Begin(("keypad" + std::to_string(side)).c_str(), nullptr,
-        ImGuiWindowFlags_NoTitleBar
-        | ImGuiWindowFlags_NoResize
-        | ImGuiWindowFlags_NoMove
-        | ImGuiWindowFlags_NoScrollbar
-    );
-
-
-    // button styling: same semi-transparent gray, white border
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.3f, 0.3f, 0.3f, 0.5f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.4f, 0.4f, 0.4f, 0.6f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.3f, 0.3f, 0.3f, 0.7f));
-    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);
-    // reuse the ImGuiCol_Border color already on the stack
-
-    ImVec2 bt_size = { s.keypad_unit_width, s.keypad_unit_width };
-
-    ImGui::Button("7", bt_size); ImGui::SameLine();
-    ImGui::Button("8", bt_size); ImGui::SameLine();
-    ImGui::Button("9", bt_size);
-
-    ImGui::Button("4", bt_size); ImGui::SameLine();
-    ImGui::Button("5", bt_size); ImGui::SameLine();
-    ImGui::Button("6", bt_size);
-
-    ImGui::Button("1", bt_size); ImGui::SameLine();
-    ImGui::Button("2", bt_size); ImGui::SameLine();
-    ImGui::Button("3", bt_size);
-
-    ImGui::Button("0", bt_size); ImGui::SameLine();
-    ImGui::Button("訂正", { s.keypad_unit_width * 2 + spacing.x, s.keypad_unit_width });
-
-    ImGui::PushFont(nullptr, s.keypad_font_size_tiny);
-    {
-        ImVec2 avail = ImGui::GetContentRegionAvail();
-        const char* bot_text = "10KEY";
-        ImVec2 tsz = ImGui::CalcTextSize(bot_text);
-        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (avail.x - tsz.x) * 0.5f);
-        ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (avail.y - tsz.y) * 0.5f);
-        ImGui::TextUnformatted(bot_text);
-    }
-    ImGui::PopFont();
-
-    ImGui::PopStyleVar(1);        // FrameBorderSize
-    ImGui::PopStyleColor(3);      // Button, Hovered, Active
-    ImGui::End();
-
-    // pop window styles
-    ImGui::PopStyleColor(2);      // WindowBg, Border
-    ImGui::PopStyleVar(1);        // WindowBorderSize
-    ImGui::PopFont();
-
-    return -1;
-}
-
 void Ticker16seg(const char* text)
 {
     char text_data[10] = { 0 };
     memset(text_data, ' ', 9);
-    strncpy(text_data, text, 9);
+    strncpy_s(text_data, text, 9);
     ImGui::PushFont(s.font_seg16);
 
     ImVec2 ticker_sz = ImGui::CalcTextSize("⌓⌓⌓⌓⌓⌓⌓⌓⌓");
@@ -265,4 +185,442 @@ void Ticker16seg(const char* text)
     
     ImGui::PopFont();
     ImGui::PopStyleColor(1);
+}
+
+std::once_flag of;
+
+struct tex {
+    int width = 0;
+    int height = 0;
+    ID3D11ShaderResourceView* data = nullptr;
+
+    static tex fromFile(const char* path)
+    {
+        tex ret;
+        bool res = LoadTextureFromFile(
+            path,
+            &ret.data,
+            &ret.width,
+            &ret.height
+        );
+        assert(res);
+        return ret;
+    }
+
+    static tex fromResource(Resource rsrc)
+    {
+        tex ret;
+        bool res = LoadTextureFromMemory(
+            rsrc.data(),
+            rsrc.size(),
+            &ret.data,
+            &ret.width,
+            &ret.height
+        );
+        assert(res);
+        return ret;
+    }
+
+    ImVec2 size() {
+        return ImVec2(float(width), float(height));
+    }
+};
+
+tex icon_10key_mini;
+tex usr_tenkey;
+tex close_button;
+tex icon_home;
+
+void DrawAll()
+{
+    std::call_once(of, []() {
+        r_TEX_10key_mini.load();
+        icon_10key_mini = tex::fromResource(r_TEX_10key_mini);
+        
+        r_TEX_10key.load();
+        usr_tenkey = tex::fromResource(r_TEX_10key);
+        
+        r_TEX_10key_close.load();
+        close_button = tex::fromResource(r_TEX_10key_close);
+
+        r_TEX_home.load();
+        icon_home = tex::fromResource(r_TEX_home);
+    });
+
+    ImGuiIO& io = ImGui::GetIO();
+    ImGuiStyle& style = ImGui::GetStyle();
+
+    // top bar
+    ImGui::SetNextWindowPos({ 0, 0 });
+    ImGui::SetNextWindowSize({ io.DisplaySize.x, 100.f });
+
+    ImGui::Begin("top_bar", nullptr,
+        ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoNav |
+        ImGuiWindowFlags_NoTitleBar |
+        ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoScrollbar);
+    ImVec2 avail = ImGui::GetContentRegionAvail();
+    avail -= style.WindowPadding;
+
+
+    float key_img_scale = avail.y / float(icon_10key_mini.height);
+    ImVec2 key_img_dim = {
+        float(icon_10key_mini.width) * key_img_scale,
+        float(icon_10key_mini.height) * key_img_scale,
+    };
+    float home_img_scale = avail.y / float(icon_home.height);
+    ImVec2 home_img_dim = {
+        float(icon_home.width) * home_img_scale,
+        float(icon_home.height) * home_img_scale,
+    };
+
+    float tint1 = g_gui_keypad1_visible ? 1.f : 0.5f;
+    if (ImGui::ImageButton("p1_key_btn",
+        icon_10key_mini.data,
+        key_img_dim,
+        ImVec2(0, 0),
+        ImVec2(1, 1),
+        ImVec4(0, 0, 0, 0),
+        ImVec4(tint1, tint1, tint1, 1)
+    ))
+    {
+        g_gui_keypad1_visible = !g_gui_keypad1_visible;
+    }
+    ImGui::SameLine();
+
+    ImGui::SetCursorPosX(avail.x - key_img_dim.x);
+
+    float tint2 = g_gui_keypad2_visible ? 1.f : 0.5f;
+    if (ImGui::ImageButton("p2_key_btn",
+        icon_10key_mini.data,
+        key_img_dim,
+        ImVec2(0, 0),
+        ImVec2(1, 1),
+        ImVec4(0, 0, 0, 0),
+        ImVec4(tint2, tint2, tint2, 1)
+    ))
+    {
+        g_gui_keypad2_visible = !g_gui_keypad2_visible;
+    }
+    ImGui::SameLine();
+
+    ImGui::SetCursorPosX((avail.x - home_img_dim.x) * 0.5f);
+    ImGui::Image(icon_home.data, home_img_dim);
+    ImGui::SameLine();
+    ImGui::SetCursorPosX((avail.x - home_img_dim.x) * 0.5f);
+    if (ImGui::InvisibleButton("home_icon", home_img_dim))
+    {
+        ImGui::OpenPopup("home_page");
+    }
+    if (ImGui::BeginPopup("home_page"))
+    {
+        ImGui::Text("dim %f %f", home_img_dim.x, home_img_dim.y);
+
+        ImGui::EndPopup();
+    }
+
+
+    ImGui::End();
+
+    // keypads
+    {
+        ImVec2 spacing = ImGui::GetStyle().ItemSpacing;
+        ImVec2 window_padding = ImGui::GetStyle().WindowPadding;
+        ImGuiViewport* main_viewport = ImGui::GetMainViewport();
+        ImVec2 view_sz = main_viewport->Size;
+
+        ImVec2 key_size = usr_tenkey.size() * 1.4f;
+        ImVec2 close_size = close_button.size() * 1.4f;
+        ImVec2 btsz = { 81.f, 81.f };
+        float btoff = 98.f;
+        ImVec2 btsz_big = { 81.f + btoff, 81.f };
+
+        if (g_gui_keypad1_visible)
+        {
+
+            ImGui::SetNextWindowPos({
+                s.keypad_padding,
+                view_sz.y - key_size.y - s.keypad_padding
+            });
+            ImGui::SetNextWindowSize({
+                key_size.x + window_padding.x * 2.f + close_size.x,
+                key_size.y + window_padding.y * 2.f
+            });
+
+            ImGui::Begin("keypad0", nullptr,
+                ImGuiWindowFlags_NoTitleBar
+                | ImGuiWindowFlags_NoResize
+                | ImGuiWindowFlags_NoMove
+                | ImGuiWindowFlags_NoScrollbar
+                | (g_debug ? 0 : ImGuiWindowFlags_NoBackground)
+            );
+            ImVec2 sp = ImGui::GetCursorScreenPos();
+            ImVec2 base = sp + ImVec2(24.f, 24.f);
+
+            ImGui::Image(usr_tenkey.data, key_size);
+
+            ImDrawList* dl = ImGui::GetWindowDrawList();
+
+            auto keypad_button = [&](ImVec2 pos, int keycode, ImVec2 sz) {
+                ImGui::PushID(keycode);
+                ImGui::SetCursorScreenPos(base + pos);
+                if (g_debug)
+                    dl->AddRect(base + pos, base + pos + sz, 0xff0000ff);
+                ImGui::InvisibleButton("", sz);
+                if (ImGui::IsItemHovered())
+                {
+                    ImVec2 off1 = { 1.f, 1.f };
+                    dl->AddRectFilled(base + pos - off1,
+                        base + pos + sz + off1,
+                        s.keypad_highlight_color,
+                        2.f);
+                    g_eamio_keypad_p1 |= (1 << keycode);
+                } 
+                else
+                {
+                    g_eamio_keypad_p1 &= ~(1 << keycode);
+                }
+                ImGui::PopID();
+            };
+
+            keypad_button(ImVec2(btoff * 0, btoff * 0), EAM_IO_KEYPAD_1, btsz);
+            keypad_button(ImVec2(btoff * 1, btoff * 0), EAM_IO_KEYPAD_2, btsz);
+            keypad_button(ImVec2(btoff * 2, btoff * 0), EAM_IO_KEYPAD_3, btsz);
+
+            keypad_button(ImVec2(btoff * 0, btoff * 1), EAM_IO_KEYPAD_4, btsz);
+            keypad_button(ImVec2(btoff * 1, btoff * 1), EAM_IO_KEYPAD_5, btsz);
+            keypad_button(ImVec2(btoff * 2, btoff * 1), EAM_IO_KEYPAD_6, btsz);
+
+            keypad_button(ImVec2(btoff * 0, btoff * 2), EAM_IO_KEYPAD_7, btsz);
+            keypad_button(ImVec2(btoff * 1, btoff * 2), EAM_IO_KEYPAD_8, btsz);
+            keypad_button(ImVec2(btoff * 2, btoff * 2), EAM_IO_KEYPAD_9, btsz);
+
+            keypad_button(ImVec2(btoff * 0, btoff * 3), EAM_IO_KEYPAD_0, btsz);
+            keypad_button(ImVec2(btoff * 1, btoff * 3), EAM_IO_KEYPAD_DECIMAL, btsz_big);
+        
+            ImVec2 bb = {
+                sp.x + key_size.x,
+                sp.y + key_size.y - close_size.y
+            };
+            ImGui::SetCursorScreenPos(bb);
+            ImGui::Image(close_button.data, close_size);
+            if (g_debug) dl->AddRect(bb, bb + close_size, 0xff0000ff);
+
+            ImGui::SetCursorScreenPos(bb);
+            if (ImGui::InvisibleButton("p1_close", close_size))
+            {
+                g_gui_keypad1_visible = false;
+            }
+            if (ImGui::IsItemHovered())
+            {
+                ImVec2 off1 = { 1.f, 1.f };
+                dl->AddRectFilled(bb - off1,
+                    bb + close_size + off1,
+                    s.keypad_highlight_color,
+                    2.f);
+            }
+            ImGui::End();
+        }
+        if (g_gui_keypad2_visible)
+        {
+            std::lock_guard<std::mutex> l(g_eamio_card_mutex);
+
+            ImVec2 wsz = {
+                key_size.x + window_padding.x * 2.f + close_size.x,
+                key_size.y + window_padding.y * 2.f
+            };
+            ImGui::SetNextWindowSize(wsz);
+            ImGui::SetNextWindowPos({
+                view_sz.x - wsz.x - s.keypad_padding,
+                view_sz.y - key_size.y - s.keypad_padding
+            });
+
+            ImGui::Begin("keypad2", nullptr,
+                ImGuiWindowFlags_NoTitleBar
+                | ImGuiWindowFlags_NoResize
+                | ImGuiWindowFlags_NoMove
+                | ImGuiWindowFlags_NoScrollbar
+                | (g_debug ? 0 : ImGuiWindowFlags_NoBackground)
+            );
+            ImVec2 sp = ImGui::GetCursorScreenPos();
+            ImVec2 base = sp + ImVec2(24.f, 24.f);
+            base.x += close_size.x;
+
+            ImGui::SetCursorScreenPos({ sp.x + close_size.x, sp.y });
+            ImGui::Image(usr_tenkey.data, key_size);
+
+            ImDrawList* dl = ImGui::GetWindowDrawList();
+
+            auto keypad_button = [&](ImVec2 pos, int keycode, ImVec2 sz) {
+                ImGui::PushID(keycode);
+                ImGui::SetCursorScreenPos(base + pos);
+                if (g_debug)
+                    dl->AddRect(base + pos, base + pos + sz, 0xff0000ff);
+                ImGui::InvisibleButton("", sz);
+                if (ImGui::IsItemHovered())
+                {
+                    ImVec2 off1 = { 1.f, 1.f };
+                    dl->AddRectFilled(base + pos - off1,
+                        base + pos + sz + off1,
+                        s.keypad_highlight_color,
+                        2.f);
+                    g_eamio_keypad_p2 |= (1 << keycode);
+                }
+                else
+                {
+                    g_eamio_keypad_p2 &= ~(1 << keycode);
+                }
+                ImGui::PopID();
+                };
+
+            keypad_button(ImVec2(btoff * 0, btoff * 0), EAM_IO_KEYPAD_1, btsz);
+            keypad_button(ImVec2(btoff * 1, btoff * 0), EAM_IO_KEYPAD_2, btsz);
+            keypad_button(ImVec2(btoff * 2, btoff * 0), EAM_IO_KEYPAD_3, btsz);
+
+            keypad_button(ImVec2(btoff * 0, btoff * 1), EAM_IO_KEYPAD_4, btsz);
+            keypad_button(ImVec2(btoff * 1, btoff * 1), EAM_IO_KEYPAD_5, btsz);
+            keypad_button(ImVec2(btoff * 2, btoff * 1), EAM_IO_KEYPAD_6, btsz);
+
+            keypad_button(ImVec2(btoff * 0, btoff * 2), EAM_IO_KEYPAD_7, btsz);
+            keypad_button(ImVec2(btoff * 1, btoff * 2), EAM_IO_KEYPAD_8, btsz);
+            keypad_button(ImVec2(btoff * 2, btoff * 2), EAM_IO_KEYPAD_9, btsz);
+
+            keypad_button(ImVec2(btoff * 0, btoff * 3), EAM_IO_KEYPAD_0, btsz);
+            keypad_button(ImVec2(btoff * 1, btoff * 3), EAM_IO_KEYPAD_DECIMAL, btsz_big);
+
+            ImVec2 bb = {
+                sp.x,
+                sp.y + key_size.y - close_size.y
+            };
+            ImGui::SetCursorScreenPos(bb);
+            ImGui::Image(close_button.data, close_size);
+            if (g_debug) dl->AddRect(bb, bb + close_size, 0xff0000ff);
+
+            ImGui::SetCursorScreenPos(bb);
+            if (ImGui::InvisibleButton("p2_close", close_size))
+            {
+                g_gui_keypad2_visible = false;
+            }
+            if (ImGui::IsItemHovered())
+            {
+                ImVec2 off1 = { 1.f, 1.f };
+                dl->AddRectFilled(bb - off1,
+                    bb + close_size + off1,
+                    s.keypad_highlight_color,
+                    2.f);
+            }
+            ImGui::End();
+        }
+    }
+
+    ImGui::Begin("debug_data");
+        ImGui::Text("FPS: %.2f", 1.f / io.DeltaTime);
+        ImGui::Text("rect {L=%d, T=%d, R=%d, B=%d}",
+            (int)g_rect.left, (int)g_rect.top,
+            (int)g_rect.right, (int)g_rect.bottom);
+
+        ImGui::SeparatorText("IIDX");
+            ImGui::Text("iidx_rect {L=%d, T=%d, R=%d, B=%d}",
+                (int)g_iidx_rect.left, (int)g_iidx_rect.top,
+                (int)g_iidx_rect.right, (int)g_iidx_rect.bottom);
+            ImGui::Text("iidx_name \"%s\"", g_iidx_name);
+            ImGui::Text("iidx_hwnd %p", g_iidx_hwnd);
+            ImGui::Checkbox("debug", &g_debug);
+
+        ImGui::SeparatorText("Touch input");
+            ImGui::Text("touch_event_count: %d", g_touch_event_count.load());
+            if (!g_himetric_scale_x || !g_himetric_scale_y)
+                ImGui::Text("himetric_scale: (NULL, NULL)");
+            else
+                ImGui::Text("himetric_scale: (%.5f, %.5f)", g_himetric_scale_x.value(), g_himetric_scale_y.value());
+
+            for (const auto& [k, v] : g_touchpoints)
+            {
+                float xposf = float(v.ptHimetricLocation.x) * g_himetric_scale_x.value_or(1.f);
+                float yposf = float(v.ptHimetricLocation.y) * g_himetric_scale_y.value_or(1.f);
+                int xpos = int(xposf);
+                int ypos = int(yposf);
+                if (k == 0xffffffff)
+                {
+                    ImGui::Text("-");
+                    continue;
+                }
+                else
+                {
+                    ImGui::Text("%04x -> (%d, %d) [%d, %d]",
+                        int(k),
+                        v.ptPixelLocation.x, v.ptPixelLocation.y,
+                        xpos, ypos
+                    );
+                }
+            }
+
+        ImGui::SeparatorText("VEFXIO");
+            ImGui::Text("enabled: %d", int(g_vefxio_enabled.load()));
+        {
+            std::lock_guard<std::mutex> l(g_vefxio_ticker_mutex);
+            ImGui::Text("ticker_text: \"%s\"", g_vefxio_ticker_text);
+        }
+        {
+            std::lock_guard<std::mutex> l(g_vefxio_effector_mutex);
+            ImGui::Text("effector:");
+            ImGui::SliderInt("[0]", &g_vefxio_effector_state[0], 0, 14);
+            ImGui::SliderInt("[1]", &g_vefxio_effector_state[1], 0, 14);
+            ImGui::SliderInt("[2]", &g_vefxio_effector_state[2], 0, 14);
+            ImGui::SliderInt("[3]", &g_vefxio_effector_state[3], 0, 14);
+            ImGui::SliderInt("[4]", &g_vefxio_effector_state[4], 0, 14);
+        }
+
+        ImGui::SeparatorText("AIC");
+        {
+            std::lock_guard<std::mutex> l(g_aic_mutex);
+            ImGui::Checkbox("aic_flip_readers", &g_aic_flip_readers);
+
+            for (int r_no = 0; r_no < (int)g_aic_cardio_paths.size(); r_no++)
+            {
+                ImGui::Text("[%d]: %s", (int)r_no, g_aic_cardio_paths[r_no].c_str());
+            }
+        }
+        ImGui::NewLine();
+
+        ImGui::SeparatorText("EAMIO");
+        ImGui::Text("enabled: %d", int(g_eamio_enabled.load()));
+        {
+            std::lock_guard<std::mutex> lc(g_eamio_card_mutex);
+            std::lock_guard<std::mutex> lk(g_eamio_keypad_mutex);
+
+            ImGui::PushID("p1");
+                ImGui::Text("keypad: %04x", (int)g_eamio_keypad_p1);
+                if (g_eamio_card_p1)
+                    ImGui::Text("card: %02x%02x%02x%02x%02x%02x%02x%02x",
+                        g_eamio_card_p1.value()[0],
+                        g_eamio_card_p1.value()[1],
+                        g_eamio_card_p1.value()[2],
+                        g_eamio_card_p1.value()[3],
+                        g_eamio_card_p1.value()[4],
+                        g_eamio_card_p1.value()[5],
+                        g_eamio_card_p1.value()[6],
+                        g_eamio_card_p1.value()[7]);
+                else
+                    ImGui::Text("card: NULL");
+            ImGui::PopID();
+
+            ImGui::PushID("p2");
+                ImGui::Text("keypad: %04x", (int)g_eamio_keypad_p2);
+                if (g_eamio_card_p2)
+                    ImGui::Text("card: %02x%02x%02x%02x%02x%02x%02x%02x",
+                        g_eamio_card_p2.value()[0],
+                        g_eamio_card_p2.value()[1],
+                        g_eamio_card_p2.value()[2],
+                        g_eamio_card_p2.value()[3],
+                        g_eamio_card_p2.value()[4],
+                        g_eamio_card_p2.value()[5],
+                        g_eamio_card_p2.value()[6],
+                        g_eamio_card_p2.value()[7]);
+                else
+                    ImGui::Text("card: NULL");
+            ImGui::PopID();
+        }
+    ImGui::End();
 }

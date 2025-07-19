@@ -148,12 +148,10 @@ extern "C" __declspec(dllexport) uint8_t backend_eamio_read_card(
     std::copy(card_data.begin(), card_data.end(), card_id);
     resert_card(unit_no);
 
-    if (card_data[0] == 0xe0 && card_data[1] == 0x04) {
+    if (card_data[0] == 0xe0 && card_data[1] == 0x04)
         return EAM_IO_CARD_ISO15696;
-    }
-    else {
+    else
         return EAM_IO_CARD_FELICA;
-    }
 }
 
 extern "C" __declspec(dllexport) uint8_t backend_eamio_card_slot_cmd(
