@@ -5,22 +5,21 @@
 
 ## project layout
 ```
-/
-„¥„Ÿ„Ÿ src/
-„    „¥„Ÿ„Ÿ api.cpp - Exported API that both eamio.dll and
-„    „        vefxio.dll use to talk to backend.dll
-„    „¥„Ÿ„Ÿ backend.cpp - Main code for spawning the window
-„    „        initializing dx11 context, hooking and handling touch
-„    „¤„Ÿ„Ÿ ...
-„¥„Ÿ„Ÿ include/
-„    „¥„Ÿ„Ÿ globals.hpp - All global variables
-„    „¥„Ÿ„Ÿ stype.hpp - UI style vars
-„    „¤„Ÿ„Ÿ ...
-„¥„Ÿ„Ÿ assets/
-„    „¥„Ÿ„Ÿ assets.rc - Windows resource file
-„    „¤„Ÿ„Ÿ resource_def.h - Asset -> ID associations
-„¤„Ÿ„Ÿ libs/
-    „¥„Ÿ„Ÿ imgui/      (https://github.com/ocornut/imgui)
-    „¥„Ÿ„Ÿ json.hpp    (https://github.com/nlohmann/json)
-    „¤„Ÿ„Ÿ stb_image.h (https://github.com/nothings/stb)
+src/
+â”œâ”€â”€ api.cpp - Exported API that both eamio.dll and
+â”‚       vefxio.dll use to talk to backend.dll
+â””â”€â”€ backend.cpp - Main code for spawning the window,
+â”‚       initializing dx11 context, hooking and handling touch/
+â””â”€â”€ ...
+include/
+â”œâ”€â”€ globals.hpp - All global variables
+â”œâ”€â”€ stype.hpp - UI style vars
+â””â”€â”€ ...
+assets/
+â”œâ”€â”€ assets.rc - Windows resource file
+â””â”€â”€ resource_def.h - Asset -> ID associations
+libs/
+â”œâ”€â”€ imgui/      (https://github.com/ocornut/imgui)
+â”œâ”€â”€ json.hpp    (https://github.com/nlohmann/json)
+â””â”€â”€ stb_image.h (https://github.com/nothings/stb)
 ```
