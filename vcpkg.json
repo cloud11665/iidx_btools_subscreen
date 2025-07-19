@@ -1,0 +1,17 @@
+{
+    "name": "iidx-btools-subscreen",
+    "version": "1.0.0",
+    "builtin-baseline": "b91c3336aee7f32412508f7dd351ae2cabdb8819",
+    "dependencies": [
+        {
+            "name": "ffmpeg",
+            "version>=": "7.1.1#3",
+            "features": [
+                "nonfree",
+                "nvcodec",
+                "openh264",
+                "fdk-aac"
+            ]
+        }
+    ]
+}
