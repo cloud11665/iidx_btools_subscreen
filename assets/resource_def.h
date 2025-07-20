@@ -2,7 +2,6 @@
 
 // fonts
 #define IDR_DF_POPMIX_W5	101
-//#define IDR_16SEGMENTS		102
 
 // textures
 #define TEX_home			201

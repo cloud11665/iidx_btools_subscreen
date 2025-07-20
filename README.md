@@ -1,4 +1,15 @@
-﻿# vefxio + eamio subscreen for iidx 12-24
+﻿# [WIP] vefxio + eamio subscreen for iidx 12-24
+
+## Installation
+- place `backend.dll`, `vefxio.dll`, `eamio.dll` in the same folder as your `gamestart-XX.bat`
+- for styles that ship with `bm2dx.dll` edit `gamestart-XX.bat` as shown below
+```
+inject iidxhook2.dll backend.dll bm2dx.exe
+```
+- otherwise change it to
+```
+inject iidxhook2.dll -K backend.dll -K bm2dx.dll
+```
 
 
 ## Features
@@ -32,3 +43,10 @@ libs/
 ├── json.hpp    (https://github.com/nlohmann/json)
 └── stb_image.h (https://github.com/nothings/stb)
 ```
+
+## Credits
+[Radioo/aic_key_eamio](https://github.com/Radioo/aic_key_eamio)
+
+
+[dmadison/LED-Segment-ASCII](https://github.com/dmadison/LED-Segment-ASCII)
+
