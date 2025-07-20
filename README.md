@@ -1,6 +1,15 @@
-# vefxio + eamio subscreen for iidx 12-24
+﻿# vefxio + eamio subscreen for iidx 12-24
 
 
+## Features
+- Ticker
+- keypads
+- effector sliders
+- spice2x CardIO reader support
+## todo
+- spcie2x card json support
+- replay recording and uploading using official XRPC apis
+- scene-awareness
 
 
 ## project layout

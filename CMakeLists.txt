@@ -26,11 +26,11 @@ set(ASSETS_RC
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET
         libavdevice
-        libavfilter
+#        libavfilter
         libavformat
         libavcodec
-        libswresample
-        libswscale
+#        libswresample
+#        libswscale
         libavutil
 )
 
