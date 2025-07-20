@@ -13,6 +13,9 @@ jobs:
   build-win32:
     runs-on: windows-latest
 
+    env:
+      VCPKG_DEFAULT_TRIPLET: x86-windows-static
+
     defaults:
       run:
         shell: cmd
@@ -33,6 +36,7 @@ jobs:
         uses: lukka/run-cmake@v10
         with:
           configurePreset: x86-release
+          buildPreset: x86-release
 
       - name: Upload DLL artifacts
         uses: actions/upload-artifact@v4
