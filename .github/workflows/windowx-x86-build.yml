@@ -43,6 +43,6 @@ jobs:
         with:
           name: dll-artifacts
           path: |
-            out/build/x86-release/backend.dll
-            out/build/x86-release/vefxio.dll
-            out/build/x86-release/eamio.dll
+            backend.dll
+            vefxio.dll
+            eamio.dll
