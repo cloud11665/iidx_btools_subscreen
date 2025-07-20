@@ -30,6 +30,7 @@ jobs:
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgJsonGlob: 'vcpkg.json'
+          vcpkgGitCommitId: 'b91c3336aee7f32412508f7dd351ae2cabdb8819'
 
       - name: Create build directory
         run: |
