@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <cstdint>
 
@@ -11,3 +11,7 @@ int32_t Keypad(int side);
 void Ticker16seg(const char* text);
 
 void DrawAll();
+
+
+void makeFont();
+void Ticker();

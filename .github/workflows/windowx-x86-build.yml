@@ -31,12 +31,12 @@ jobs:
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgJsonGlob: 'vcpkg.json'
+          runVcpkgInstall: true
 
       - name: Run CMake+vcpkg+Ninja to build packages and generate/build the code.
         uses: lukka/run-cmake@v10
         with:
           configurePreset: x86-release
-          buildPreset: x86-release
 
       - name: Upload DLL artifacts
         uses: actions/upload-artifact@v4

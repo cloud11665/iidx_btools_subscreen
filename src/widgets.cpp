@@ -147,46 +147,6 @@ void Effector(int effector_vals[5]) {
     ImGui::End();
 }
 
-void Ticker16seg(const char* text)
-{
-    char text_data[10] = { 0 };
-    memset(text_data, ' ', 9);
-    strncpy_s(text_data, text, 9);
-    ImGui::PushFont(s.font_seg16);
-
-    ImVec2 ticker_sz = ImGui::CalcTextSize("⌓⌓⌓⌓⌓⌓⌓⌓⌓");
-    ImVec2 spacing = ImGui::GetStyle().ItemSpacing;
-    ImVec2 window_padding = ImGui::GetStyle().WindowPadding;
-    ImGuiViewport* main_viewport = ImGui::GetMainViewport();
-    ImVec2 view_sz = main_viewport->Size;
-
-    ImVec2 ticker_w_sz = {
-        ticker_sz.x + window_padding.x * 2.f,
-        ticker_sz.y + window_padding.y * 2.f
-    };
-
-    ImGui::SetNextWindowSize(ticker_w_sz);
-    ImGui::SetNextWindowPos({
-        (view_sz.x - ticker_w_sz.x) * 0.5f,
-        0.f
-    });
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.13f, 0.13f, 0.13f, 1.f));
-
-    ImGui::Begin("16seg", nullptr, ImGuiWindowFlags_NoTitleBar
-        | ImGuiWindowFlags_NoResize
-        | ImGuiWindowFlags_NoMove
-        | ImGuiWindowFlags_NoScrollbar);
-
-        ImVec2 start = ImGui::GetCursorPos();
-        ImGui::TextColored({ 0.15f, 0.15f, 0.15f, 1.f }, "⌓⌓⌓⌓⌓⌓⌓⌓⌓");
-        ImGui::SetCursorPos(start + ImVec2{ -1.f, 0.f });
-        ImGui::TextColored({ 0.8f, 0.0f, 0.0f, 1.f }, text_data);
-    ImGui::End();
-    
-    ImGui::PopFont();
-    ImGui::PopStyleColor(1);
-}
-
 std::once_flag of;
 
 struct tex {
@@ -251,77 +211,77 @@ void DrawAll()
     ImGuiStyle& style = ImGui::GetStyle();
 
     // top bar
+    {
     ImGui::SetNextWindowPos({ 0, 0 });
     ImGui::SetNextWindowSize({ io.DisplaySize.x, 100.f });
-
     ImGui::Begin("top_bar", nullptr,
         ImGuiWindowFlags_NoMove |
         ImGuiWindowFlags_NoNav |
         ImGuiWindowFlags_NoTitleBar |
         ImGuiWindowFlags_NoResize |
         ImGuiWindowFlags_NoScrollbar);
-    ImVec2 avail = ImGui::GetContentRegionAvail();
-    avail -= style.WindowPadding;
+
+        ImVec2 avail = ImGui::GetContentRegionAvail();
+        avail -= style.WindowPadding;
 
 
-    float key_img_scale = avail.y / float(icon_10key_mini.height);
-    ImVec2 key_img_dim = {
-        float(icon_10key_mini.width) * key_img_scale,
-        float(icon_10key_mini.height) * key_img_scale,
-    };
-    float home_img_scale = avail.y / float(icon_home.height);
-    ImVec2 home_img_dim = {
-        float(icon_home.width) * home_img_scale,
-        float(icon_home.height) * home_img_scale,
-    };
+        float key_img_scale = avail.y / float(icon_10key_mini.height);
+        ImVec2 key_img_dim = {
+            float(icon_10key_mini.width) * key_img_scale,
+            float(icon_10key_mini.height) * key_img_scale,
+        };
+        float home_img_scale = avail.y / float(icon_home.height);
+        ImVec2 home_img_dim = {
+            float(icon_home.width) * home_img_scale,
+            float(icon_home.height) * home_img_scale,
+        };
 
-    float tint1 = g_gui_keypad1_visible ? 1.f : 0.5f;
-    if (ImGui::ImageButton("p1_key_btn",
-        icon_10key_mini.data,
-        key_img_dim,
-        ImVec2(0, 0),
-        ImVec2(1, 1),
-        ImVec4(0, 0, 0, 0),
-        ImVec4(tint1, tint1, tint1, 1)
-    ))
-    {
-        g_gui_keypad1_visible = !g_gui_keypad1_visible;
-    }
-    ImGui::SameLine();
+        float tint1 = g_gui_keypad1_visible ? 1.f : 0.5f;
+        if (ImGui::ImageButton("p1_key_btn",
+            icon_10key_mini.data,
+            key_img_dim,
+            ImVec2(0, 0),
+            ImVec2(1, 1),
+            ImVec4(0, 0, 0, 0),
+            ImVec4(tint1, tint1, tint1, 1)
+        ))
+        {
+            g_gui_keypad1_visible = !g_gui_keypad1_visible;
+        }
+        ImGui::SameLine();
 
-    ImGui::SetCursorPosX(avail.x - key_img_dim.x);
+        ImGui::SetCursorPosX(avail.x - key_img_dim.x);
 
-    float tint2 = g_gui_keypad2_visible ? 1.f : 0.5f;
-    if (ImGui::ImageButton("p2_key_btn",
-        icon_10key_mini.data,
-        key_img_dim,
-        ImVec2(0, 0),
-        ImVec2(1, 1),
-        ImVec4(0, 0, 0, 0),
-        ImVec4(tint2, tint2, tint2, 1)
-    ))
-    {
-        g_gui_keypad2_visible = !g_gui_keypad2_visible;
-    }
-    ImGui::SameLine();
+        float tint2 = g_gui_keypad2_visible ? 1.f : 0.5f;
+        if (ImGui::ImageButton("p2_key_btn",
+            icon_10key_mini.data,
+            key_img_dim,
+            ImVec2(0, 0),
+            ImVec2(1, 1),
+            ImVec4(0, 0, 0, 0),
+            ImVec4(tint2, tint2, tint2, 1)
+        ))
+        {
+            g_gui_keypad2_visible = !g_gui_keypad2_visible;
+        }
+        ImGui::SameLine();
 
-    ImGui::SetCursorPosX((avail.x - home_img_dim.x) * 0.5f);
-    ImGui::Image(icon_home.data, home_img_dim);
-    ImGui::SameLine();
-    ImGui::SetCursorPosX((avail.x - home_img_dim.x) * 0.5f);
-    if (ImGui::InvisibleButton("home_icon", home_img_dim))
-    {
-        ImGui::OpenPopup("home_page");
-    }
-    if (ImGui::BeginPopup("home_page"))
-    {
-        ImGui::Text("dim %f %f", home_img_dim.x, home_img_dim.y);
+        ImGui::SetCursorPosX((avail.x - home_img_dim.x) * 0.5f);
+        ImGui::Image(icon_home.data, home_img_dim);
+        ImGui::SameLine();
+        ImGui::SetCursorPosX((avail.x - home_img_dim.x) * 0.5f);
+        if (ImGui::InvisibleButton("home_icon", home_img_dim))
+        {
+            ImGui::OpenPopup("home_page");
+        }
+        if (ImGui::BeginPopup("home_page"))
+        {
+            ImGui::Text("dim %f %f", home_img_dim.x, home_img_dim.y);
 
-        ImGui::EndPopup();
-    }
-
-
+            ImGui::EndPopup();
+        }
     ImGui::End();
+    }
 
     // keypads
     {
@@ -367,16 +327,17 @@ void DrawAll()
                 ImGui::SetCursorScreenPos(base + pos);
                 if (g_debug)
                     dl->AddRect(base + pos, base + pos + sz, 0xff0000ff);
+                
                 ImGui::InvisibleButton("", sz);
                 if (ImGui::IsItemHovered())
                 {
+                    g_eamio_keypad_p1 |= (1 << keycode);
                     ImVec2 off1 = { 1.f, 1.f };
                     dl->AddRectFilled(base + pos - off1,
                         base + pos + sz + off1,
                         s.keypad_highlight_color,
                         2.f);
-                    g_eamio_keypad_p1 |= (1 << keycode);
-                } 
+                }
                 else
                 {
                     g_eamio_keypad_p1 &= ~(1 << keycode);
@@ -434,7 +395,7 @@ void DrawAll()
             ImGui::SetNextWindowPos({
                 view_sz.x - wsz.x - s.keypad_padding,
                 view_sz.y - key_size.y - s.keypad_padding
-            });
+                });
 
             ImGui::Begin("keypad2", nullptr,
                 ImGuiWindowFlags_NoTitleBar
@@ -457,15 +418,16 @@ void DrawAll()
                 ImGui::SetCursorScreenPos(base + pos);
                 if (g_debug)
                     dl->AddRect(base + pos, base + pos + sz, 0xff0000ff);
+
                 ImGui::InvisibleButton("", sz);
                 if (ImGui::IsItemHovered())
                 {
+                    g_eamio_keypad_p2 |= (1 << keycode);
                     ImVec2 off1 = { 1.f, 1.f };
                     dl->AddRectFilled(base + pos - off1,
                         base + pos + sz + off1,
                         s.keypad_highlight_color,
                         2.f);
-                    g_eamio_keypad_p2 |= (1 << keycode);
                 }
                 else
                 {
@@ -513,6 +475,10 @@ void DrawAll()
             ImGui::End();
         }
     }
+    
+    //ImGui::ShowDemoWindow();
+
+    Ticker();
 
     ImGui::Begin("debug_data");
         ImGui::Text("FPS: %.2f", 1.f / io.DeltaTime);

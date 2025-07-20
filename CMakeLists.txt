@@ -57,6 +57,7 @@ add_library(backend SHARED
         src/api.cpp
         src/utils.cpp
         src/widgets.cpp
+        src/widgets/ticker.cpp
         src/textures.cpp
         src/resources.cpp
         ${IMGUI_CORE}

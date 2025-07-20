@@ -395,13 +395,7 @@ static DWORD WINAPI SubmonThread(LPVOID)
         &font_cfg
     );
 
-    r_IDR_16SEGMENTS.load();
-    s.font_seg16 = io.Fonts->AddFontFromMemoryTTF(
-        r_IDR_16SEGMENTS.data(),
-        r_IDR_16SEGMENTS.size(),
-        200.0f,
-        &font_cfg
-    );
+    makeFont();
 
     io.FontDefault = font;
     io.ConfigFlags |= ImGuiConfigFlags_IsTouchScreen;

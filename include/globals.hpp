@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -85,8 +85,7 @@ inline bool                         g_gui_keypad2_visible{ false };
 
 
 // -------------------------------- resources ---------------------------------
-inline Resource	r_IDR_DF_POPMIX_W5	{ IDR_DF_POPMIX_W5 };
-inline Resource	r_IDR_16SEGMENTS	{ IDR_16SEGMENTS };
+inline Resource	r_IDR_DF_POPMIX_W5  { IDR_DF_POPMIX_W5 };
 inline Resource	r_TEX_home			{ TEX_home };
 inline Resource	r_TEX_10key_mini	{ TEX_10key_mini };
 inline Resource	r_TEX_10key			{ TEX_10key };
