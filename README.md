@@ -8,7 +8,7 @@ inject iidxhook2.dll backend.dll bm2dx.exe
 ```
 - otherwise change it to
 ```
-inject iidxhook2.dll -K backend.dll -K bm2dx.dll
+inject -K iidxhook5.dll -K backend.dll bm2dx.dll
 ```
 
 
