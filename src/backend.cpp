@@ -357,18 +357,18 @@ static DWORD WINAPI SubmonThread(LPVOID)
     ::RegisterClassExW(&wc);
 
      g_hwnd = ::CreateWindowExW(
-        WS_EX_LAYERED | WS_EX_NOACTIVATE,
-        wc.lpszClassName, L"", WS_OVERLAPPED,
+         WS_EX_TOPMOST | WS_EX_LAYERED | WS_EX_NOACTIVATE,
+        wc.lpszClassName, L"", WS_POPUP,
         g_rect.left,
         g_rect.top,
         g_rect.right - g_rect.left,
         g_rect.bottom - g_rect.top,
         nullptr, nullptr, wc.hInstance, nullptr
      );
-
+      
     ::SetLayeredWindowAttributes(g_hwnd, 0, 255, LWA_ALPHA);
     ::ShowWindow(g_hwnd, SW_SHOW);
-    ::SetWindowPos(g_hwnd, HWND_BOTTOM,
+    ::SetWindowPos(g_hwnd, HWND_TOPMOST,
         g_rect.left, g_rect.top,
         g_rect.right - g_rect.left,
         g_rect.bottom - g_rect.top,

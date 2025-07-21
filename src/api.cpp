@@ -1,4 +1,4 @@
-#include <algorithm>
+﻿#include <algorithm>
 #include <mutex>
 #include <cstring>
 #include <thread>
@@ -47,9 +47,9 @@ extern "C" __declspec(dllexport) bool backend_vefxio_write_16seg(
     const char* text
 )
 {
-    BtoolsEvent e = {.tag = BtoolsEventTag::VEFXIO_WRITE_16SEG};
-    strcpy_s(e.text, text);
-    add_event(e);
+    //BtoolsEvent e = {.tag = BtoolsEventTag::VEFXIO_WRITE_16SEG};
+    //strcpy_s(e.text, text);
+    //add_event(e);
     std::lock_guard<std::mutex> lock(g_vefxio_ticker_mutex);
     strcpy_s(g_vefxio_ticker_text, text);
     return true;
@@ -85,10 +85,10 @@ extern "C" __declspec(dllexport) uint16_t backend_eamio_get_keypad_state(
     uint8_t unit_no
 )
 {
-    add_event({
+  /*  add_event({
         .tag = BtoolsEventTag::EAMIO_GET_KEYPAD_STATE,
         .unit_no = unit_no
-    });
+    });*/
     std::lock_guard<std::mutex> lock(g_eamio_keypad_mutex);
     if (unit_no == 0)
         return g_eamio_keypad_p1;
@@ -101,10 +101,10 @@ extern "C" __declspec(dllexport) uint8_t backend_eamio_get_sensor_state(
     uint8_t unit_no
 )
 {
-    add_event({
-        .tag = BtoolsEventTag::EAMIO_GET_SENSOR_STATE,
-        .unit_no = unit_no
-    });
+    //add_event({
+    //    .tag = BtoolsEventTag::EAMIO_GET_SENSOR_STATE,
+    //    .unit_no = unit_no
+    //});
     std::lock_guard<std::mutex> lock(g_eamio_card_mutex);
 
     return unit_no == 0 ? g_eamio_sensor_p1 : g_eamio_sensor_p2;
@@ -116,12 +116,12 @@ extern "C" __declspec(dllexport) uint8_t backend_eamio_read_card(
     uint8_t nbytes
 )
 {
-    add_event({
-        .tag = BtoolsEventTag::EAMIO_READ_CARD,
-        .unit_no = unit_no,
-        .card_id = card_id,
-        .nbytes = nbytes
-    });
+    //add_event({
+    //    .tag = BtoolsEventTag::EAMIO_READ_CARD,
+    //    .unit_no = unit_no,
+    //    .card_id = card_id,
+    //    .nbytes = nbytes
+    //});
     std::lock_guard<std::mutex> lock(g_eamio_card_mutex);
 
     card_data_t card_data;
@@ -159,11 +159,11 @@ extern "C" __declspec(dllexport) uint8_t backend_eamio_card_slot_cmd(
     uint8_t cmd
 )
 {
-    add_event({
-        .tag = BtoolsEventTag::EAMIO_CARD_SLOT_CMD,
-        .unit_no = unit_no,
-        .cmd = cmd
-    });
+    //add_event({
+    //    .tag = BtoolsEventTag::EAMIO_CARD_SLOT_CMD,
+    //    .unit_no = unit_no,
+    //    .cmd = cmd
+    //});
     std::lock_guard<std::mutex> lock(g_eamio_card_mutex);
 
     uint8_t* state = unit_no == 0 ? &g_eamio_sensor_p1 : &g_eamio_sensor_p2;
@@ -193,10 +193,10 @@ extern "C" __declspec(dllexport) uint8_t backend_eamio_poll(
     uint8_t unit_no
 )
 {
-    add_event({
-        .tag = BtoolsEventTag::EAMIO_POLL,
-        .unit_no = unit_no
-    });
+    //add_event({
+    //    .tag = BtoolsEventTag::EAMIO_POLL,
+    //    .unit_no = unit_no
+    //});
     std::lock_guard<std::mutex> lock(g_eamio_card_mutex);
 
     if (unit_no == 0)
