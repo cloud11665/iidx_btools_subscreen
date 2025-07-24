@@ -38,6 +38,10 @@ jobs:
         with:
           configurePreset: x86-release
 
+      - name: List all built files
+        run: |
+          dir /s /b
+
       - name: Upload DLL artifacts
         uses: actions/upload-artifact@v4
         with:
