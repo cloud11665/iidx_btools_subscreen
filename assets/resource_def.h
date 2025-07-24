@@ -1,10 +1,10 @@
 ﻿#pragma once
 
 // fonts
-#define IDR_DF_POPMIX_W5	101
+#define IDR_IIDX_FONT	101
 
 // textures
-#define TEX_home			201
-#define TEX_10key_mini		202
-#define TEX_10key			203
-#define TEX_10key_close		204
+#define IDR_icon_home		201
+#define IDR_icon_keypad		202
+#define IDR_keypad			203
+#define IDR_keypad_close	204

@@ -1,8 +1,9 @@
-#pragma once
+﻿#pragma once
 
 #include <cstdint>
 #include <vector>
 #include <string>
+#include <windows.h>
 
 
 namespace aic

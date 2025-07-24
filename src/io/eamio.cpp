@@ -1,12 +1,12 @@
-#define WIN32_LEAN_AND_MEAN
+﻿#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
 #include <atomic>
 
 extern "C"
 {
-#include "bemanitools/glue.h"
-#include "bemanitools/eamio.h"
+    #include "bemanitools/glue.h"
+    #include "bemanitools/eamio.h"
 }
 
 #define BT_API extern "C" __declspec(dllexport)

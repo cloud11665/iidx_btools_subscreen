@@ -12,7 +12,7 @@
 #include <algorithm>
 
 #include "globals.hpp"
-#include "aic.hpp"
+#include "io/aic.hpp"
 
 constexpr WORD VID = 0xCAFF;
 constexpr WORD PID = 0x400E;
@@ -43,7 +43,7 @@ std::vector<std::string> aic::listCardIOPaths()
     GUID hidGuid;
     ::HidD_GetHidGuid(&hidGuid);
 
-    HDEVINFO h = ::SetupDiGetClassDevsA(&hidGuid, nullptr, nullptr,
+    HDEVINFO h = ::SetupDiGetClassDevs(&hidGuid, nullptr, nullptr,
         DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
     if (h == INVALID_HANDLE_VALUE) return paths;
 
@@ -51,12 +51,12 @@ std::vector<std::string> aic::listCardIOPaths()
     for (DWORD idx = 0; ::SetupDiEnumDeviceInterfaces(h, nullptr, &hidGuid, idx, &ifd); ++idx)
     {
         DWORD need = 0;
-        ::SetupDiGetDeviceInterfaceDetailA(h, &ifd, nullptr, 0, &need, nullptr);
+        ::SetupDiGetDeviceInterfaceDetail(h, &ifd, nullptr, 0, &need, nullptr);
         std::vector<char> buf(need);
         auto det = reinterpret_cast<PSP_DEVICE_INTERFACE_DETAIL_DATA>(buf.data());
         det->cbSize = sizeof(*det);
 
-        if (::SetupDiGetDeviceInterfaceDetailA(h, &ifd, det, need, nullptr, nullptr))
+        if (::SetupDiGetDeviceInterfaceDetail(h, &ifd, det, need, nullptr, nullptr))
         {
             std::string path = det->DevicePath;
             if (isDesiredCardIO(path)) paths.push_back(std::move(path));
@@ -76,7 +76,7 @@ HANDLE aic::openCardIOHandle(size_t deviceIndex, std::string& outPath)
     if (deviceIndex >= g_aic_cardio_paths.size()) return INVALID_HANDLE_VALUE;
 
     outPath = g_aic_cardio_paths[deviceIndex];
-    return ::CreateFileA(g_aic_cardio_paths[deviceIndex].c_str(),
+    return ::CreateFile(outPath.c_str(),
         GENERIC_READ | GENERIC_WRITE,
         FILE_SHARE_READ | FILE_SHARE_WRITE,
         nullptr, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, nullptr);

@@ -5,7 +5,7 @@
 #include "imgui.h"
 
 #include "globals.hpp"
-#include "widgets.hpp"
+#include "widgets/widgets.hpp"
 
 
 // CREDIT: https://github.com/dmadison/LED-Segment-ASCII
@@ -108,7 +108,7 @@ static const uint32_t SixteenSegmentASCII[96] = {
 	0b00000000000000000, /* (del) */
 };
 
-uint32_t iidx_16seg[256] = { 0 };
+static uint32_t iidx_16seg[256] = { 0 };
 
 static const std::vector<std::vector<ImVec2>> points = {
 	{{128, 884}, {304, 884}, {304, 815}, {129, 815}, {89,  855}},
@@ -129,7 +129,7 @@ static const std::vector<std::vector<ImVec2>> points = {
 	{{131, 484}, {268, 484}, {304, 441}, {268, 404}, {131, 404}, {90,  444}},
 };
 
-void makeFont()
+auto ticker::build_segment_font() -> void
 {
 	int32_t ua = (1 << 0);
 	int32_t ub = (1 << 1);
@@ -162,17 +162,14 @@ void makeFont()
 	iidx_16seg['.'] = uf;
 }
 
-ImColor color_seg_on = ImColor(0.15f, 0.15f, 0.15f, 0.8f);
-ImColor color_seg_off = ImColor(0.8f, 0.0f, 0.0f, 1.f);
-
-void drawChar(
+static auto draw_char(
 	ImDrawList* dl,
 	ImVec2 cpos,
 	uint32_t c,
 	float size,
 	float scale_x = 0.9f,
 	float shear = 0.1f
-)
+) -> void
 {
 	int i = -1;
 	for (auto plist : points)
@@ -188,13 +185,13 @@ void drawChar(
 			p = cpos + p;
 		}
 		if (!(c & (1 << i)))
-			dl->AddConvexPolyFilled(plist.data(), plist.size(), color_seg_on);
+			dl->AddConvexPolyFilled(plist.data(), plist.size(), ticker::color_seg_on);
 		else
-			dl->AddConvexPolyFilled(plist.data(), plist.size(), color_seg_off);
+			dl->AddConvexPolyFilled(plist.data(), plist.size(), ticker::color_seg_off);
 	}
 }
 
-void Ticker()
+auto ticker::draw_ticker_window() -> void
 {
 	ImVec2 wsize = { 9 * 140 + 20, 220 };
 
@@ -227,7 +224,7 @@ void Ticker()
 		}
 		if (c == 'm') c = '.';
 		if (c == 'q') c = '\'';
-		drawChar(dl, cpos, iidx_16seg[c], 200.f);
+		draw_char(dl, cpos, iidx_16seg[c], 200.f);
 		cpos.x += 140.f;
 	}
 	ImGui::End();

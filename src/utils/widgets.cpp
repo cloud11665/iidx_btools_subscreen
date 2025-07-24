@@ -12,7 +12,7 @@
 #include "style.hpp"
 #include "widgets.hpp"
 
-#include "textures.hpp"
+//#include "textures.hpp"
 
 void EffectorFader(const char* text_top, const char* text_bottom, int* value, int main_tick) {
     assert(0 <= *value && *value <= 14);
@@ -147,66 +147,10 @@ void Effector(int effector_vals[5]) {
     ImGui::End();
 }
 
-std::once_flag of;
-
-struct tex {
-    int width = 0;
-    int height = 0;
-    ID3D11ShaderResourceView* data = nullptr;
-
-    static tex fromFile(const char* path)
-    {
-        tex ret;
-        bool res = LoadTextureFromFile(
-            path,
-            &ret.data,
-            &ret.width,
-            &ret.height
-        );
-        assert(res);
-        return ret;
-    }
-
-    static tex fromResource(Resource rsrc)
-    {
-        tex ret;
-        bool res = LoadTextureFromMemory(
-            rsrc.data(),
-            rsrc.size(),
-            &ret.data,
-            &ret.width,
-            &ret.height
-        );
-        assert(res);
-        return ret;
-    }
-
-    ImVec2 size() {
-        return ImVec2(float(width), float(height));
-    }
-};
-
-tex icon_10key_mini;
-tex usr_tenkey;
-tex close_button;
-tex icon_home;
 
 void DrawAll()
 {
-    std::call_once(of, []() {
-        r_TEX_10key_mini.load();
-        icon_10key_mini = tex::fromResource(r_TEX_10key_mini);
-        
-        r_TEX_10key.load();
-        usr_tenkey = tex::fromResource(r_TEX_10key);
-        
-        r_TEX_10key_close.load();
-        close_button = tex::fromResource(r_TEX_10key_close);
-
-        r_TEX_home.load();
-        icon_home = tex::fromResource(r_TEX_home);
-    });
-
+#if 0
     ImGuiIO& io = ImGui::GetIO();
     ImGuiStyle& style = ImGui::GetStyle();
 
@@ -589,4 +533,126 @@ void DrawAll()
             ImGui::PopID();
         }
     ImGui::End();
+#endif
 }
+
+// Test ffmpeg
+
+/*
+
+extern "C" {
+#include <libavcodec/avcodec.h>
+#include <libavutil/opt.h>
+#include <libavutil/imgutils.h>
+}
+void encode_example() {
+    const AVCodec* codec = avcodec_find_encoder_by_name("libopenh264");
+    if (!codec) {
+        std::cerr << "Encoder 'libopenh264' not found\n";
+        return;
+    }
+
+    AVCodecContext* ctx = avcodec_alloc_context3(codec);
+    if (!ctx) {
+        std::cerr << "Failed to allocate codec context\n";
+        return;
+    }
+
+    ctx->bit_rate = 400000;
+    ctx->width = 640;
+    ctx->height = 480;
+    ctx->time_base = {1, 25};
+    ctx->framerate = {25, 1};
+    ctx->gop_size = 10;
+    ctx->max_b_frames = 1;
+    ctx->pix_fmt = AV_PIX_FMT_YUV420P;
+
+    if (avcodec_open2(ctx, codec, nullptr) < 0) {
+        std::cerr << "Failed to open codec\n";
+        avcodec_free_context(&ctx);
+        return;
+    }
+
+    AVFrame* frame = av_frame_alloc();
+    frame->format = ctx->pix_fmt;
+    frame->width  = ctx->width;
+    frame->height = ctx->height;
+    av_frame_get_buffer(frame, 32);  // align
+
+    AVPacket* pkt = av_packet_alloc();
+
+    for (int i = 0; i < 5; i++) {
+        av_frame_make_writable(frame);
+        // Fill Y, U, V with dummy data
+        for (int y = 0; y < ctx->height; y++) {
+            memset(frame->data[0] + y * frame->linesize[0], i * 10, ctx->width);  // Y
+        }
+        for (int y = 0; y < ctx->height / 2; y++) {
+            memset(frame->data[1] + y * frame->linesize[1], 128, ctx->width / 2); // U
+            memset(frame->data[2] + y * frame->linesize[2], 128, ctx->width / 2); // V
+        }
+
+        frame->pts = i;
+
+        int ret = avcodec_send_frame(ctx, frame);
+        while (ret >= 0) {
+            ret = avcodec_receive_packet(ctx, pkt);
+            if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) break;
+            if (ret < 0) {
+                std::cerr << "Error during encoding\n";
+                break;
+            }
+            std::cout << "Encoded frame " << i << ", size: " << pkt->size << " bytes\n";
+            av_packet_unref(pkt);
+        }
+    }
+
+    // Flush encoder
+    avcodec_send_frame(ctx, nullptr);
+    while (avcodec_receive_packet(ctx, pkt) == 0) {
+        std::cout << "Flushed packet, size: " << pkt->size << " bytes\n";
+        av_packet_unref(pkt);
+    }
+
+    av_frame_free(&frame);
+    av_packet_free(&pkt);
+    avcodec_free_context(&ctx);
+}
+*/
+
+/*
+    const auto bm2dx = modules::find("bm2dx.exe");
+
+    const auto render_boot_text_p = memory::find(bm2dx.region(), "A1 ? ? ? ? 8B 4C 24 04 69 C0 ? ? ? ?");
+    using render_boot_text_t = int (*) (int, int, uint32_t, const char*);
+    static const render_boot_text_t render_boot_text = reinterpret_cast<render_boot_text_t>(render_boot_text_p);
+
+    const auto print_boot_info_p = memory::find(bm2dx.region(), "7C A8 68 ? ? ? ?");
+
+    static auto print_boot_hook = safetyhook::create_mid(print_boot_info_p,
+        [](safetyhook::Context& ctx) {
+            int y;
+            if (g_iidx_version.value_or(0) > 14)
+                y = 72 + 24 * 8;
+            else
+                y = 72 + 24 * 7;
+
+            render_boot_text(32, y, 0x90FFFFFF, "------------------------------------");
+            y += 24;
+
+            render_boot_text(32, y, 0xFFFFFFFF, "SUBMON HOOK VER.   :");
+            render_boot_text(240, y, 0xFF00FFFF, "v0.1");
+            y += 24;
+
+            render_boot_text(32, y, 0xffffff30, "MODULES ENABLED    :");
+            std::string modules = "";
+            if (g_eamio_enabled)
+                modules += "EAMIO";
+            if (g_eamio_enabled && g_vefxio_enabled)
+                modules += ", ";
+            if (g_vefxio_enabled)
+                modules += "VEFXIO";
+            render_boot_text(240, y, 0xffffff30, modules.c_str());
+        }
+    );
+*/

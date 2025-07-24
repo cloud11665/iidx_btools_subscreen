@@ -18,9 +18,9 @@
 #include <algorithm>
 #include <utility>
 
-#include "api.hpp"
-
-#include "resources.hpp"
+#include "resource_def.h"
+#include "window.hpp"
+#include "io/api.hpp"
 
 
 using card_data_t = std::array<uint8_t, 8>;
@@ -31,13 +31,16 @@ inline std::atomic<bool>		g_running{ false };
 inline HINSTANCE                g_hInstance{ nullptr };
 inline HANDLE					g_backend_h{ nullptr };
 inline HWND						g_hwnd{ nullptr };
+inline WNDCLASSEXW              g_wndclass{};
 inline RECT						g_rect{};
 inline HMONITOR					g_hmon{ nullptr };
 inline bool                     g_debug{ true };
+inline float                    g_dpi_scale{ 96.f };
 inline HWND						g_iidx_hwnd{ nullptr };
 inline HHOOK					g_iidx_msgHook{ nullptr };
 inline RECT						g_iidx_rect{};
 inline CHAR						g_iidx_name[256] = { 0 };
+inline std::optional<int>       g_iidx_version{ std::nullopt };
 
 // ---------------------------------- input -----------------------------------
 inline std::atomic_int32_t      g_touch_event_count{ 0 };
@@ -83,10 +86,14 @@ inline std::vector<std::thread>     g_aic_threads;
 inline bool                         g_gui_keypad1_visible{ false };
 inline bool                         g_gui_keypad2_visible{ false };
 
-
 // -------------------------------- resources ---------------------------------
-inline Resource	r_IDR_DF_POPMIX_W5  { IDR_DF_POPMIX_W5 };
-inline Resource	r_TEX_home			{ TEX_home };
-inline Resource	r_TEX_10key_mini	{ TEX_10key_mini };
-inline Resource	r_TEX_10key			{ TEX_10key };
-inline Resource	r_TEX_10key_close	{ TEX_10key_close };
+inline window::Resource	res_iidx_font		{ IDR_IIDX_FONT };
+inline window::Resource	res_icon_home		{ IDR_icon_home };
+inline window::Resource	res_icon_keypad		{ IDR_icon_keypad };
+inline window::Resource	res_keypad			{ IDR_keypad };
+inline window::Resource	res_keypad_close	{ IDR_keypad_close };
+
+inline std::optional<window::Texture> tex_icon_home		{ std::nullopt };
+inline std::optional<window::Texture> tex_icon_keypad	{ std::nullopt };
+inline std::optional<window::Texture> tex_keypad		{ std::nullopt };
+inline std::optional<window::Texture> tex_keypad_close	{ std::nullopt };
