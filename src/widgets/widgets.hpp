@@ -27,3 +27,8 @@ namespace debug_view
 {
 	auto draw() -> void;
 }
+
+namespace card_view
+{
+	auto draw() -> void;
+}

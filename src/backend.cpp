@@ -54,6 +54,7 @@ static DWORD WINAPI SubmonThread(LPVOID)
         keypads::draw();
         debug_view::draw();
         ImGui::ShowDemoWindow();
+        card_view::draw();
 
         //ImGui::Begin("animation2");
         //static bool running = false;

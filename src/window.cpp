@@ -19,6 +19,7 @@
 #include "window.hpp"
 #include "defer.hpp"
 #include "exceptions.hpp"
+#include "widgets/widgets.hpp"
 
 auto window::Resource::load() -> void
 {
@@ -145,6 +146,8 @@ auto window::Texture::from_file(std::string_view path) -> window::Texture
 
 auto window::init_resources() -> void
 {
+    ticker::build_segment_font();
+
     // Load resources (always safe to call load() repeatedly)
     res_iidx_font.load();
     res_icon_home.load();
@@ -614,7 +617,7 @@ auto window::render_touch_animations() -> void
 
         // 1st effect: tex_touch_effect01
         {
-            auto easeOutQuint = [](float t) { return 1 - (1 - t) * (1 - t) * (1 - t) * (1 - t) * (1 - t); };
+            auto easeOutQuint = [](float t) { return 1 - (1 - t) * (1 - t) * (1 - t) * (1 - t) * (1 - t); }; 
             float scale = easeOutQuint(t);
             ImVec2 img_size = tex_touch_effect01->size() * scale * 0.7f;
             float alpha = 1.0f - t;

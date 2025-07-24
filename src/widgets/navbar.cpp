@@ -64,13 +64,8 @@ auto navbar::draw() -> void
     ImGui::SetCursorPosX((avail.x - home_img_dim.x) * 0.5f);
     if (ImGui::InvisibleButton("home_icon", home_img_dim))
     {
-        ImGui::OpenPopup("home_page");
+        g_gui_card_view_visible = !g_gui_card_view_visible;
     }
-    if (ImGui::BeginPopup("home_page"))
-    {
-        ImGui::Text("dim %f %f", home_img_dim.x, home_img_dim.y);
 
-        ImGui::EndPopup();
-    }
     ImGui::End();
 }

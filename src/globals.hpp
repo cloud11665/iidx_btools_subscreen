@@ -87,6 +87,7 @@ inline std::vector<std::thread>     g_aic_threads;
 // -------------------------------- gui state ---------------------------------
 inline bool                         g_gui_keypad1_visible{ false };
 inline bool                         g_gui_keypad2_visible{ false };
+inline bool                         g_gui_card_view_visible{ false };
 
 // -------------------------------- resources ---------------------------------
 inline window::Resource res_iidx_font            { IDR_IIDX_FONT };
