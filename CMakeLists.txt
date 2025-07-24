@@ -58,6 +58,9 @@ add_library(backend SHARED
     src/backend.cpp
     src/window.cpp
     src/widgets/ticker.cpp
+    src/widgets/navbar.cpp
+    src/widgets/keypads.cpp
+    src/widgets/debug_view.cpp
     src/io/aic.cpp
     src/io/api.cpp
     ${IMGUI_CORE}

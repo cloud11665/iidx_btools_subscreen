@@ -191,7 +191,7 @@ static auto draw_char(
 	}
 }
 
-auto ticker::draw_ticker_window() -> void
+auto ticker::draw() -> void
 {
 	ImVec2 wsize = { 9 * 140 + 20, 220 };
 

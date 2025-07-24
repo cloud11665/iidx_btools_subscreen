@@ -3,16 +3,6 @@
 #include <cstdint>
 #include "imgui.h"
 
-//void EffectorFader(const char* text_top, const char* text_bottom, int* value, int main_tick);
-//
-//void Effector(int effector_vals[5]);
-//
-//int32_t Keypad(int side);
-//
-//void Ticker16seg(const char* text);
-//
-//void DrawAll();
-
 
 namespace ticker
 {
@@ -20,6 +10,20 @@ namespace ticker
 	inline ImColor color_seg_off = ImColor(0.8f, 0.0f, 0.0f, 1.f);
 
 	auto build_segment_font() -> void;
-	auto draw_ticker_window() -> void;
+	auto draw() -> void;
 }
 
+namespace navbar
+{
+	auto draw() -> void;
+}
+
+namespace keypads
+{
+	auto draw() -> void;
+}
+
+namespace debug_view
+{
+	auto draw() -> void;
+}

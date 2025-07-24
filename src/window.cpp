@@ -8,6 +8,7 @@
 #include <fstream>
 #include <string>
 #include <windows.h>
+#include <ranges>
 
 #include <d3d11.h>
 #include "imgui.h"
@@ -144,16 +145,36 @@ auto window::Texture::from_file(std::string_view path) -> window::Texture
 
 auto window::init_resources() -> void
 {
+    // Load resources (always safe to call load() repeatedly)
     res_iidx_font.load();
     res_icon_home.load();
     res_icon_keypad.load();
     res_keypad.load();
     res_keypad_close.load();
+    res_icon_card.load();
+    res_icon_settings.load();
+    res_effector_bg.load();
+    res_effector_0.load();
+    res_effector_1.load();
+    res_effector_head.load();
+    res_touch_effect01.load();
+    res_touch_effect_cross.load();
+    res_touch_effect_cross2.load();
 
+    // Load textures from resources
     tex_icon_home = Texture::from_buffer(res_icon_home.data());
     tex_icon_keypad = Texture::from_buffer(res_icon_keypad.data());
     tex_keypad = Texture::from_buffer(res_keypad.data());
     tex_keypad_close = Texture::from_buffer(res_keypad_close.data());
+    tex_icon_card = Texture::from_buffer(res_icon_card.data());
+    tex_icon_settings = Texture::from_buffer(res_icon_settings.data());
+    tex_effector_bg = Texture::from_buffer(res_effector_bg.data());
+    tex_effector_0 = Texture::from_buffer(res_effector_0.data());
+    tex_effector_1 = Texture::from_buffer(res_effector_1.data());
+    tex_effector_head = Texture::from_buffer(res_effector_head.data());
+    tex_touch_effect01 = Texture::from_buffer(res_touch_effect01.data());
+    tex_touch_effect_cross = Texture::from_buffer(res_touch_effect_cross.data());
+    tex_touch_effect_cross2 = Texture::from_buffer(res_touch_effect_cross2.data());
 }
 
 
@@ -568,8 +589,92 @@ auto window::process_touch() -> void
             io.AddMouseButtonEvent(0, 0);
             io.AddMousePosEvent(-1.f, -1.f);
         }
+
+        if (is_pressed && !g_prev_pressed) {
+            g_active_touch_animations.push_back({ pos, g_frame_n });
+        }
+
         g_prev_pressed = is_pressed;
     }
+}
+
+auto window::render_touch_animations() -> void
+{
+    int duration = 20;
+    auto* draw_list = ImGui::GetForegroundDrawList();
+
+    for (auto it = g_active_touch_animations.begin(); it != g_active_touch_animations.end(); )
+    {
+        int nf = g_frame_n - it->start_frame;
+        if (nf > duration) {
+            continue;
+        }
+
+        float t = nf / float(duration);
+
+        // 1st effect: tex_touch_effect01
+        {
+            auto easeOutQuint = [](float t) { return 1 - (1 - t) * (1 - t) * (1 - t) * (1 - t) * (1 - t); };
+            float scale = easeOutQuint(t);
+            ImVec2 img_size = tex_touch_effect01->size() * scale * 0.7f;
+            float alpha = 1.0f - t;
+
+            draw_list->AddImage(
+                tex_touch_effect01->srv(),
+                it->pos - img_size * 0.5f,
+                it->pos + img_size * 0.5f,
+                ImVec2(0, 0), ImVec2(1, 1),
+                IM_COL32(255, 255, 255, int(alpha * 255))
+            );
+        }
+
+        // 2nd effect: tex_touch_effect_cross (uses half-duration, reverse scaling)
+        {
+            float t2 = nf / float(duration / 2);
+            t2 = std::clamp(t2, 0.0f, 1.0f);
+            auto easeOut = [](float t) { return 1 - (1 - t) * (1 - t); };
+            float scale = easeOut(1.f - t2);
+            ImVec2 img_size = tex_touch_effect_cross->size() * scale * 0.6f;
+            float alpha = 1.0f - t2;
+
+            draw_list->AddImage(
+                tex_touch_effect_cross->srv(),
+                it->pos - img_size * 0.5f,
+                it->pos + img_size * 0.5f,
+                ImVec2(0, 0), ImVec2(1, 1),
+                IM_COL32(255, 255, 255, int(alpha * 255))
+            );
+        }
+
+        // 3rd effect: tex_touch_effect_cross2 (static size, hard fade at 0.5)
+        {
+            float alpha = 0.f;
+            if      (t < 0.3f) alpha = 0.8f;
+            else if (t < 0.5f) alpha = 0.f;
+            else if (t < 0.7f) alpha = 0.8f;
+            else if (t < 0.9f) alpha = 0.f;
+            else if (t < 1.0f) alpha = 0.8f;
+
+            ImVec2 img_size = tex_touch_effect_cross2->size();
+            draw_list->AddImage(
+                tex_touch_effect_cross2->srv(),
+                it->pos - img_size * 0.5f,
+                it->pos + img_size * 0.5f,
+                ImVec2(0, 0), ImVec2(1, 1),
+                IM_COL32(255, 255, 255, int(alpha * 255))
+            );
+        }
+
+        ++it;
+    }
+
+    std::vector<window::TouchAnimation> vt;
+    for (auto ta : g_active_touch_animations)
+    {
+        if (g_frame_n - ta.start_frame < duration)
+            vt.push_back(ta);
+    }
+    g_active_touch_animations = vt;
 }
 
 auto window::cleanup() -> void

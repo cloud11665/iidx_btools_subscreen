@@ -91,9 +91,15 @@ namespace window
         static auto from_file(std::string_view path) -> Texture;
 
         ID3D11ShaderResourceView* srv() const noexcept { return m_srv; }
+        auto width() const -> float { return float(m_width); }
+        auto height() const -> float { return float(m_height); }
         auto size() const -> ImVec2 { return { float(m_width), float(m_height) }; }
     };
 
+    struct TouchAnimation {
+        ImVec2 pos;
+        int start_frame;
+    };
 
     auto find_iidx() -> void;
     auto create_device() -> void;
@@ -102,5 +108,6 @@ namespace window
     auto init_resources() -> void;
     auto cleanup() -> void;
 
-	auto process_touch() -> void;
+    auto process_touch() -> void;
+    auto render_touch_animations() -> void;
 }
