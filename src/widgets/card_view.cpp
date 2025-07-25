@@ -28,7 +28,8 @@ inline uint8_t hex_to_byte(char high, char low) {
 	return (hex(high) << 4) | hex(low);
 }
 
-inline std::array<uint8_t, 8> hex16_to_bytes(std::string_view id) {
+inline std::array<uint8_t, 8> hex16_to_bytes(std::string_view id)
+{
 	if (id.size() != 16)
 		throw std::invalid_argument("hex string must be exactly 16 characters");
 
@@ -38,7 +39,8 @@ inline std::array<uint8_t, 8> hex16_to_bytes(std::string_view id) {
 	return bytes;
 }
 
-std::string get_appdata_path(const std::string& filename) {
+std::string get_appdata_path(const std::string& filename)
+{
 	const char* appdata = std::getenv("APPDATA");
 	if (!appdata) throw std::runtime_error("APPDATA env var not set");
 	return std::string(appdata) + "\\" + filename;

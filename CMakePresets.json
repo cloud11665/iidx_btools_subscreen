@@ -35,5 +35,19 @@
         "CMAKE_BUILD_TYPE": "Release"
       }
     }
+  ],
+  "buildPresets": [
+    {
+      "name": "x86-debug",
+      "configurePreset": "x86-debug",
+      "displayName": "x86 Debug",
+      "configuration": "Debug"
+    },
+    {
+      "name": "x86-release",
+      "configurePreset": "x86-release",
+      "displayName": "x86 Release",
+      "configuration": "Release"
+    }
   ]
 }

@@ -37,6 +37,7 @@ jobs:
         uses: lukka/run-cmake@v10
         with:
           configurePreset: x86-release
+          buildPreset: x86-release
 
       - name: List all built files
         run: |
