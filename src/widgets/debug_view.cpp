@@ -51,10 +51,10 @@ auto debug_view::draw() -> void
         }
     }
 
-    for (auto tp : g_active_touch_animations)
-    {
-        ImGui::Text("(%d, %d) %d", int(tp.pos.x), int(tp.pos.y), tp.start_frame);
-    }
+    //for (auto tp : g_active_touch_animations)
+    //{
+    //    ImGui::Text("(%d, %d) %d", int(tp.pos.x), int(tp.pos.y), tp.start_frame);
+    //}
 
     ImGui::SeparatorText("VEFXIO");
     ImGui::Text("enabled: %d", int(g_vefxio_enabled.load()));

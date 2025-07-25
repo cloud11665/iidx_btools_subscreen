@@ -25,8 +25,8 @@ auto navbar::draw() -> void
     float key_img_scale = avail.y / tex_icon_keypad->height();
     ImVec2 key_img_dim = tex_icon_keypad->size() * key_img_scale;
 
-    float home_img_scale = avail.y / tex_icon_home->height();
-    ImVec2 home_img_dim = tex_icon_home->size() * home_img_scale;
+    float card_img_scale = avail.y / tex_icon_card->height();
+    ImVec2 card_img_dim = tex_icon_card->size() * card_img_scale;
 
     float tint1 = g_gui_keypad1_visible ? 1.f : 0.5f;
     if (ImGui::ImageButton("p1_key_btn",
@@ -58,14 +58,25 @@ auto navbar::draw() -> void
     }
     ImGui::SameLine();
 
-    ImGui::SetCursorPosX((avail.x - home_img_dim.x) * 0.5f);
-    ImGui::Image(tex_icon_home->srv(), home_img_dim);
+    ImGui::SetCursorPosX((avail.x - card_img_dim.x) * 0.5f);
+    ImGui::Image(tex_icon_card->srv(), card_img_dim);
     ImGui::SameLine();
-    ImGui::SetCursorPosX((avail.x - home_img_dim.x) * 0.5f);
-    if (ImGui::InvisibleButton("home_icon", home_img_dim))
+    ImGui::SetCursorPosX((avail.x - card_img_dim.x) * 0.5f);
+    if (ImGui::InvisibleButton("card_icon", card_img_dim))
     {
         g_gui_card_view_visible = !g_gui_card_view_visible;
     }
+    ImGui::SameLine();
+
+    ImGui::SetCursorPosX((avail.x - card_img_dim.x) * 0.5f + card_img_dim.x + 20.f);
+    ImGui::Image(tex_icon_settings->srv(), card_img_dim);
+    ImGui::SameLine();
+    ImGui::SetCursorPosX((avail.x - card_img_dim.x) * 0.5f + card_img_dim.x + 20.f);
+    if (ImGui::InvisibleButton("settings_icon", card_img_dim))
+    {
+        g_gui_settings_view_visible = !g_gui_settings_view_visible;
+    }
+
 
     ImGui::End();
 }

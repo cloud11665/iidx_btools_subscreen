@@ -52,69 +52,15 @@ static DWORD WINAPI SubmonThread(LPVOID)
         navbar::draw();
         ticker::draw();
         keypads::draw();
-        debug_view::draw();
-        ImGui::ShowDemoWindow();
+        effector::draw();
+
+        if (g_gui_settings_view_visible)
+            debug_view::draw();
         card_view::draw();
 
-        //ImGui::Begin("animation2");
-        //static bool running = false;
-        //static int frame_n = 0;
-        //frame_n++;
-        //static int start_frame = 0;
-        //if (ImGui::Button("start"))
-        //{
-        //    start_frame = frame_n;
-        //    running = true;
-        //}
-        //int duration = 15;
-        //if (running && frame_n - start_frame > duration)
-        //{
-        //    running = false;
-        //}
-        //if (running)
-        //{
-        //    int nf = frame_n - start_frame;
-        //    float t = nf / float(duration);
-        //    auto easeOut = [](float t) { return 1 - (1 - t) * (1 - t); };
-        //    float scale = easeOut(t);
-        //    ImVec2 img_size = tex_touch_effect01->size() * scale * 0.4;
-        //    float alpha = 1.0f - t;
-        //    ImVec2 center_point(200, 200);
-        //    ImVec2 img_pos = center_point - img_size * 0.5f;
-        //    ImGui::SetCursorScreenPos(ImGui::GetWindowPos() + img_pos);
-        //    ImGui::ImageWithBg(tex_touch_effect01->srv(), img_size, ImVec2(0, 0), ImVec2(1, 1), ImVec4(0,0,0,0), ImVec4(1, 1, 1, alpha));
-        //}
-        //if (running)
-        //{
-        //    int nf = frame_n - start_frame;
-        //    float t = nf / float(duration / 2);
-        //    if (t < 0.f) t = 0.f;
-        //    if (t > 1.f) t = 1.f;
-        //    auto easeOut = [](float t) { return 1 - (1 - t) * (1 - t); };
-        //    float scale = easeOut(1.f - t);
-        //    ImVec2 img_size = tex_touch_effect_cross->size() * scale * 0.6;
-        //    float alpha = 1.0f - t;
-        //    ImVec2 center_point(200, 200);
-        //    ImVec2 img_pos = center_point - img_size * 0.5f;
-        //    ImGui::SetCursorScreenPos(ImGui::GetWindowPos() + img_pos);
-        //    ImGui::ImageWithBg(tex_touch_effect_cross->srv(), img_size, ImVec2(0, 0), ImVec2(1, 1), ImVec4(0, 0, 0, 0), ImVec4(1, 1, 1, alpha));
-        //}
-        //if (running)
-        //{
-        //    int nf = frame_n - start_frame;
-        //    float t = nf / float(duration);
-        //    float alpha = t < 0.5f ? 0.8f : 0.f;
-        //    ImVec2 img_size = tex_touch_effect_cross2->size();
-        //    ImVec2 center_point(200, 200);
-        //    ImVec2 img_pos = center_point - img_size * 0.5f;
-        //    ImGui::SetCursorScreenPos(ImGui::GetWindowPos() + img_pos);
-        //    ImGui::ImageWithBg(tex_touch_effect_cross2->srv(), img_size, ImVec2(0, 0), ImVec2(1, 1), ImVec4(0, 0, 0, 0), ImVec4(1, 1, 1, alpha));
-        //}
-        //ImGui::End();
+        //ImGui::ShowDemoWindow();
 
         window::render_touch_animations();
-
-
         ImGui::Render();
         if (!g_dx11_ctx || !g_dx11_RTV)
             throw std::runtime_error("DirectX device/context or RTV is null!");

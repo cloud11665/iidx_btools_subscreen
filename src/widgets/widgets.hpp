@@ -32,3 +32,8 @@ namespace card_view
 {
 	auto draw() -> void;
 }
+
+namespace effector
+{
+	auto draw() -> void;
+}

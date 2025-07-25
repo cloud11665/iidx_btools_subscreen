@@ -11,6 +11,8 @@ project("iidx_btools_subscreen")
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+add_compile_options("/utf-8")
+
 
 set(ASSETS_RC
     "${CMAKE_CURRENT_SOURCE_DIR}/assets/assets.rc"
@@ -62,6 +64,7 @@ add_library(backend SHARED
     src/widgets/keypads.cpp
     src/widgets/debug_view.cpp
     src/widgets/card_view.cpp
+    src/widgets/effector.cpp
     src/io/aic.cpp
     src/io/api.cpp
     ${IMGUI_CORE}

@@ -1,25 +1,17 @@
-#pragma once
+﻿#pragma once
 
 #include <cstdint>
 #include "imgui.h"
 
 
 struct StyleConfig {
-	float    effector_width = 180.f;
-	float    effector_height = 500.f;
+	float    effector_width = 210.f;
+	float    effector_height = 700.f;
 
 	uint32_t effector_background_color = IM_COL32(68, 68, 68, 170);
 
 	uint32_t effector_background_frame_color = IM_COL32(170, 170, 170, 255);
 	float    effector_background_frame_thickness = 1.f;
-
-	uint32_t effector_fader_color = IM_COL32(200, 200, 200, 255);
-	float    effector_fader_width = 140.f;
-	float    effector_fader_height = 40.f;
-
-	
-	uint32_t effector_track_color = IM_COL32(0, 0, 0, 255);
-	float    effector_track_width = 40.f;
 
 	uint32_t effector_tick_color = IM_COL32(255, 255, 255, 200);
 	float    effector_tick_small_width = 30.f;

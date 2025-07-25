@@ -63,7 +63,7 @@ inline std::atomic_bool				g_vefxio_enabled{ false };
 inline std::mutex					g_vefxio_ticker_mutex;
 inline char							g_vefxio_ticker_text[16] = { 0 };
 inline std::mutex					g_vefxio_effector_mutex;
-inline int							g_vefxio_effector_state[5] = { 7, 7, 7, 0, 0 };
+inline int							g_vefxio_effector_state[5] = { 0 };
 
 inline std::atomic_bool             g_eamio_enabled{ false };
 inline std::mutex                   g_eamio_card_mutex;
@@ -88,6 +88,8 @@ inline std::vector<std::thread>     g_aic_threads;
 inline bool                         g_gui_keypad1_visible{ false };
 inline bool                         g_gui_keypad2_visible{ false };
 inline bool                         g_gui_card_view_visible{ false };
+inline bool                         g_gui_settings_view_visible{ false };
+inline float                        g_gui_effector_values[5] = { 7.5f, 7.5f, 7.5f, 15.f, 15.f };
 
 // -------------------------------- resources ---------------------------------
 inline window::Resource res_iidx_font            { IDR_IIDX_FONT };
