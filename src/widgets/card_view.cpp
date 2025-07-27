@@ -53,9 +53,20 @@ std::optional<std::string> selected_id;
 auto card_view::draw() -> void
 {
 	std::call_once(of, []() {
-		std::ifstream ifs(get_appdata_path("spicetools_card_manager.json"));
-		card_data = json::parse(ifs);
-		});
+		auto paths = {
+			get_appdata_path("spicetools_card_manager.json"),
+			get_appdata_path("spice2x\\card_manager.json")
+		};
+		for (const auto& path : paths)
+		{
+			if (!std::filesystem::exists(path))
+				continue;
+
+			std::ifstream ifs(path);
+			card_data = json::parse(ifs)["pages"][0]["cards"];
+			break;
+		}
+	});
 
 	ImVec2 frame_padding = ImGui::GetStyle().FramePadding;
 
@@ -78,9 +89,6 @@ auto card_view::draw() -> void
 	{
 		float table_height = ImGui::GetContentRegionAvail().y - frame_padding.y * 2 - 40.f;
 
-		auto cards = card_data["pages"][0]["cards"];
-
-
 		ImGui::PushFont(nullptr, 30.f);
 
 		ImGui::SetNextWindowSize({ ImGui::GetContentRegionAvail().x, table_height });
@@ -95,7 +103,7 @@ auto card_view::draw() -> void
 
 
 			int i = 0;
-			for (auto card : cards)
+			for (auto card : card_data)
 			{
 				ImGui::PushID(i++);
 

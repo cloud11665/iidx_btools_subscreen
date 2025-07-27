@@ -2,7 +2,7 @@
 
 #include "globals.hpp"
 #include "widgets/widgets.hpp"
-
+#include "resources.hpp"
 
 auto navbar::draw() -> void
 {
@@ -22,15 +22,15 @@ auto navbar::draw() -> void
     avail -= style.WindowPadding;
 
 
-    float key_img_scale = avail.y / tex_icon_keypad->height();
-    ImVec2 key_img_dim = tex_icon_keypad->size() * key_img_scale;
+    float key_img_scale = avail.y / assets::icon_keypad.tex()->height();
+    ImVec2 key_img_dim = assets::icon_keypad.tex()->size() * key_img_scale;
 
-    float card_img_scale = avail.y / tex_icon_card->height();
-    ImVec2 card_img_dim = tex_icon_card->size() * card_img_scale;
+    float card_img_scale = avail.y / assets::icon_card.tex()->height();
+    ImVec2 card_img_dim = assets::icon_card.tex()->size() * card_img_scale;
 
     float tint1 = g_gui_keypad1_visible ? 1.f : 0.5f;
     if (ImGui::ImageButton("p1_key_btn",
-        tex_icon_keypad->srv(),
+        assets::icon_keypad.tex()->srv(),
         key_img_dim,
         ImVec2(0, 0),
         ImVec2(1, 1),
@@ -46,7 +46,7 @@ auto navbar::draw() -> void
 
     float tint2 = g_gui_keypad2_visible ? 1.f : 0.5f;
     if (ImGui::ImageButton("p2_key_btn",
-        tex_icon_keypad->srv(),
+        assets::icon_keypad.tex()->srv(),
         key_img_dim,
         ImVec2(0, 0),
         ImVec2(1, 1),
@@ -59,7 +59,7 @@ auto navbar::draw() -> void
     ImGui::SameLine();
 
     ImGui::SetCursorPosX((avail.x - card_img_dim.x) * 0.5f);
-    ImGui::Image(tex_icon_card->srv(), card_img_dim);
+    ImGui::Image(assets::icon_card.tex()->srv(), card_img_dim);
     ImGui::SameLine();
     ImGui::SetCursorPosX((avail.x - card_img_dim.x) * 0.5f);
     if (ImGui::InvisibleButton("card_icon", card_img_dim))
@@ -69,7 +69,7 @@ auto navbar::draw() -> void
     ImGui::SameLine();
 
     ImGui::SetCursorPosX((avail.x - card_img_dim.x) * 0.5f + card_img_dim.x + 20.f);
-    ImGui::Image(tex_icon_settings->srv(), card_img_dim);
+    ImGui::Image(assets::icon_settings.tex()->srv(), card_img_dim);
     ImGui::SameLine();
     ImGui::SetCursorPosX((avail.x - card_img_dim.x) * 0.5f + card_img_dim.x + 20.f);
     if (ImGui::InvisibleButton("settings_icon", card_img_dim))

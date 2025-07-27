@@ -3,6 +3,7 @@
 #include "globals.hpp"
 #include "style.hpp"
 #include "widgets/widgets.hpp"
+#include "resources.hpp"
 
 auto keypads::draw() -> void
 {
@@ -14,8 +15,8 @@ auto keypads::draw() -> void
     ImGuiViewport* main_viewport = ImGui::GetMainViewport();
     ImVec2 view_sz = main_viewport->Size;
 
-    ImVec2 key_size = tex_keypad->size() * 1.4f;
-    ImVec2 close_size = tex_keypad_close->size() * 1.4f;
+    ImVec2 key_size = assets::keypad.tex()->size() * 1.4f;
+    ImVec2 close_size = assets::keypad_close.tex()->size() * 1.4f;
     ImVec2 btsz = { 81.f, 81.f };
     float btoff = 98.f;
     ImVec2 btsz_big = { 81.f + btoff, 81.f };
@@ -42,7 +43,7 @@ auto keypads::draw() -> void
         ImVec2 sp = ImGui::GetCursorScreenPos();
         ImVec2 base = sp + ImVec2(24.f, 24.f);
 
-        ImGui::Image(tex_keypad->srv(), key_size);
+        ImGui::Image(assets::keypad.tex()->srv(), key_size);
 
         ImDrawList* dl = ImGui::GetWindowDrawList();
 
@@ -89,7 +90,7 @@ auto keypads::draw() -> void
             sp.y + key_size.y - close_size.y
         };
         ImGui::SetCursorScreenPos(bb);
-        ImGui::Image(tex_keypad_close->srv(), close_size);
+        ImGui::Image(assets::keypad_close.tex()->srv(), close_size);
         if (g_debug) dl->AddRect(bb, bb + close_size, 0xff0000ff);
 
         ImGui::SetCursorScreenPos(bb);
@@ -133,7 +134,7 @@ auto keypads::draw() -> void
         base.x += close_size.x;
 
         ImGui::SetCursorScreenPos({ sp.x + close_size.x, sp.y });
-        ImGui::Image(tex_keypad->srv(), key_size);
+        ImGui::Image(assets::keypad.tex()->srv(), key_size);
 
         ImDrawList* dl = ImGui::GetWindowDrawList();
 
@@ -180,7 +181,7 @@ auto keypads::draw() -> void
             sp.y + key_size.y - close_size.y
         };
         ImGui::SetCursorScreenPos(bb);
-        ImGui::Image(tex_keypad_close->srv(), close_size);
+        ImGui::Image(assets::keypad_close.tex()->srv(), close_size);
         if (g_debug) dl->AddRect(bb, bb + close_size, 0xff0000ff);
 
         ImGui::SetCursorScreenPos(bb);

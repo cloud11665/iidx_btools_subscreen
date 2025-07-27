@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - master
+    tags:
+      - 'v*'   # Trigger when you push a version tag like v1.0.0
   pull_request:
     branches:
       - master
@@ -48,3 +50,27 @@ jobs:
             ${{ github.workspace }}\\out\\build\\x86-release\\vefxio.dll
             ${{ github.workspace }}\\out\\build\\x86-release\\eamio.dll
 
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build-win32
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dll-artifacts
+          path: release/
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          body: |
+            🔧 Changes in this release:
+            - Add release notes manually or parse from CHANGELOG
+          files: |
+            release/backend.dll
+            release/vefxio.dll
+            release/eamio.dll
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

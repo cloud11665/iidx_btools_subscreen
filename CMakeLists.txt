@@ -59,6 +59,8 @@ file(GLOB IMGUI_CORE
 add_library(backend SHARED
     src/backend.cpp
     src/window.cpp
+    src/resources.cpp
+    src/touch.cpp
     src/widgets/ticker.cpp
     src/widgets/navbar.cpp
     src/widgets/keypads.cpp

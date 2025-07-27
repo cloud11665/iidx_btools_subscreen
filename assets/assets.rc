@@ -1,7 +1,7 @@
 ﻿#include "windows.h"
 #include "resource_def.h"
 
-IDR_IIDX_FONT			RCDATA "df-popmix-w5.ttc"
+IDR_iidx_font			RCDATA "df-popmix-w5.ttc"
 
 IDR_icon_home			RCDATA "icon_home.png"
 IDR_icon_keypad			RCDATA "icon_keypad.png"

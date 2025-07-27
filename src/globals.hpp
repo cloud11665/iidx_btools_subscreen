@@ -18,8 +18,8 @@
 #include <algorithm>
 #include <utility>
 
-#include "resource_def.h"
 #include "window.hpp"
+#include "touch.hpp"
 #include "io/api.hpp"
 
 
@@ -42,7 +42,7 @@ inline RECT						g_iidx_rect{};
 inline CHAR						g_iidx_name[256] = { 0 };
 inline std::optional<int>       g_iidx_version{ std::nullopt };
 inline int                      g_frame_n{ 0 };
-inline std::vector<window::TouchAnimation> g_active_touch_animations;
+inline std::vector<touch::TouchAnimation> g_active_touch_animations;
 
 // ---------------------------------- input -----------------------------------
 inline std::atomic_int32_t      g_touch_event_count{ 0 };
@@ -90,33 +90,3 @@ inline bool                         g_gui_keypad2_visible{ false };
 inline bool                         g_gui_card_view_visible{ false };
 inline bool                         g_gui_settings_view_visible{ false };
 inline float                        g_gui_effector_values[5] = { 7.5f, 7.5f, 7.5f, 15.f, 15.f };
-
-// -------------------------------- resources ---------------------------------
-inline window::Resource res_iidx_font            { IDR_IIDX_FONT };
-inline window::Resource res_icon_home            { IDR_icon_home };
-inline window::Resource res_icon_keypad          { IDR_icon_keypad };
-inline window::Resource res_keypad               { IDR_keypad };
-inline window::Resource res_keypad_close         { IDR_keypad_close };
-inline window::Resource res_icon_card            { IDR_icon_card };
-inline window::Resource res_icon_settings        { IDR_icon_settings };
-inline window::Resource res_effector_bg          { IDR_effector_bg };
-inline window::Resource res_effector_0           { IDR_effector_0 };
-inline window::Resource res_effector_1           { IDR_effector_1 };
-inline window::Resource res_effector_head        { IDR_effector_head };
-inline window::Resource res_touch_effect01       { IDR_touch_effect01 };
-inline window::Resource res_touch_effect_cross   { IDR_touch_effect_cross };
-inline window::Resource res_touch_effect_cross2  { IDR_touch_effect_cross2 };
-
-inline std::optional<window::Texture> tex_icon_home           { std::nullopt };
-inline std::optional<window::Texture> tex_icon_keypad         { std::nullopt };
-inline std::optional<window::Texture> tex_keypad              { std::nullopt };
-inline std::optional<window::Texture> tex_keypad_close        { std::nullopt };
-inline std::optional<window::Texture> tex_icon_card           { std::nullopt };
-inline std::optional<window::Texture> tex_icon_settings       { std::nullopt };
-inline std::optional<window::Texture> tex_effector_bg         { std::nullopt };
-inline std::optional<window::Texture> tex_effector_0          { std::nullopt };
-inline std::optional<window::Texture> tex_effector_1          { std::nullopt };
-inline std::optional<window::Texture> tex_effector_head       { std::nullopt };
-inline std::optional<window::Texture> tex_touch_effect01      { std::nullopt };
-inline std::optional<window::Texture> tex_touch_effect_cross  { std::nullopt };
-inline std::optional<window::Texture> tex_touch_effect_cross2 { std::nullopt };

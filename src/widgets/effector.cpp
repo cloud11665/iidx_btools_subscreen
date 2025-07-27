@@ -12,7 +12,7 @@
 #include "widgets/widgets.hpp"
 #include "globals.hpp"
 #include "style.hpp"
-
+#include "resources.hpp"
 
 float scale = 1.5f;
 
@@ -28,9 +28,9 @@ auto draw_slider(
     ImVec2 spacing = ImGui::GetStyle().ItemSpacing;
     ImVec2 window_padding = ImGui::GetStyle().WindowPadding;
 
-    ImVec2 effector_0_sz = tex_effector_0->size() * scale;
-    ImVec2 effector_bg_sz = tex_effector_bg->size() * scale;
-    ImVec2 effector_head_sz = tex_effector_head->size() * scale;
+    ImVec2 effector_0_sz = assets::effector_0.tex()->size() * scale;
+    ImVec2 effector_bg_sz = assets::effector_bg.tex()->size() * scale;
+    ImVec2 effector_head_sz = assets::effector_head.tex()->size() * scale;
 
     ImGui::BeginChild("slider", { s.effector_width, 0 });
 
@@ -56,14 +56,14 @@ auto draw_slider(
 
         ImVec2 bg_pos = pos + (effector_0_sz - effector_bg_sz) / 2.f;
         ImGui::SetCursorPos(bg_pos);
-        ImGui::Image(tex_effector_bg->srv(), effector_bg_sz);
+        ImGui::Image(assets::effector_bg.tex()->srv(), effector_bg_sz);
 
         ImVec2 track_pos = pos;
         ImGui::SetCursorPos(pos);
         if (type == 0)
-            ImGui::Image(tex_effector_0->srv(), effector_0_sz);
+            ImGui::Image(assets::effector_0.tex()->srv(), effector_0_sz);
         else
-            ImGui::Image(tex_effector_1->srv(), effector_0_sz);
+            ImGui::Image(assets::effector_1.tex()->srv(), effector_0_sz);
 
         ImVec2 button_pos = {
             bg_pos.x + (effector_bg_sz.x - effector_head_sz.x) / 2,
@@ -115,7 +115,7 @@ auto draw_slider(
 
         // Draw knob image
         ImVec2 knob_pos(screen_pos.x, knob_y);
-        dl->AddImage(tex_effector_head->srv(),
+        dl->AddImage(assets::effector_head.tex()->srv(),
             knob_pos,
             knob_pos + effector_head_sz,
             ImVec2(0, 0), ImVec2(1, 1),
