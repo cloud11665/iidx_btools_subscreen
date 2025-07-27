@@ -90,3 +90,5 @@ inline bool                         g_gui_keypad2_visible{ false };
 inline bool                         g_gui_card_view_visible{ false };
 inline bool                         g_gui_settings_view_visible{ false };
 inline float                        g_gui_effector_values[5] = { 7.5f, 7.5f, 7.5f, 15.f, 15.f };
+inline bool                         g_gui_concentration{ false };
+inline int                          g_gui_concentration_frame{ -1 };

@@ -10,6 +10,8 @@
 #define IDR_keypad_close	204
 #define IDR_icon_card       208
 #define IDR_icon_settings   209
+#define IDR_icon_concentration_on 214
+#define IDR_icon_concentration_off 215
 
 #define IDR_effector_bg     210
 #define IDR_effector_0      211
@@ -41,4 +43,6 @@
     _(effector_head)                 \
     _(touch_effect01)                \
     _(touch_effect_cross)            \
-    _(touch_effect_cross2)
+    _(touch_effect_cross2)           \
+    _(icon_concentration_on)         \
+    _(icon_concentration_off)        

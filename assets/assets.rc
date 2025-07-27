@@ -13,6 +13,8 @@ IDR_effector_bg			RCDATA "effector_bg.png"
 IDR_effector_0			RCDATA "effector_0.png"
 IDR_effector_1			RCDATA "effector_1.png"
 IDR_effector_head		RCDATA "effector_head.png"
+IDR_icon_concentration_on RCDATA "icon_concentration_on.png"
+IDR_icon_concentration_off RCDATA "icon_concentration_off.png"
 
 IDR_touch_effect01		RCDATA "touch_effect01.png"
 IDR_touch_effect_cross	RCDATA "touch_effect_cross.png"
