@@ -11,42 +11,20 @@ inject iidxhook2.dll backend.dll bm2dx.exe
 inject -K iidxhook5.dll -K backend.dll bm2dx.dll
 ```
 
+## Credits
+[Radioo/aic_key_eamio](https://github.com/Radioo/aic_key_eamio) - for the initial aic CardIO implementation and general help with netcode and CI
+
+[aixxe/omnifix](https://github.com/aixxe/omnifix) - for the memory / module management code and general help regarding hooking
+
+[dmadison/LED-Segment-ASCII](https://github.com/dmadison/LED-Segment-ASCII) - for base subscreen font (modified by me to match beatmania)
+
 
 ## Features
 - Ticker
 - keypads
 - effector sliders
 - spice2x CardIO reader support
-## todo
 - spcie2x card json support
+## todo
 - replay recording and uploading using official XRPC apis
 - scene-awareness
-
-
-## project layout
-```
-src/
-├── api.cpp - Exported API that both eamio.dll and
-│       vefxio.dll use to talk to backend.dll
-└── backend.cpp - Main code for spawning the window,
-│       initializing dx11 context, hooking and handling touch/
-└── ...
-include/
-├── globals.hpp - All global variables
-├── stype.hpp - UI style vars
-└── ...
-assets/
-├── assets.rc - Windows resource file
-└── resource_def.h - Asset -> ID associations
-libs/
-├── imgui/      (https://github.com/ocornut/imgui)
-├── json.hpp    (https://github.com/nlohmann/json)
-└── stb_image.h (https://github.com/nothings/stb)
-```
-
-## Credits
-[Radioo/aic_key_eamio](https://github.com/Radioo/aic_key_eamio)
-
-
-[dmadison/LED-Segment-ASCII](https://github.com/dmadison/LED-Segment-ASCII)
-
