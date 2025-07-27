@@ -118,7 +118,7 @@ auto navbar::draw() -> void
     }
     ImGui::SameLine();
 
-    float mid_pos = (avail.x - card_img_dim.x * 2 + 20.f) * 0.5f;
+    float mid_pos = (avail.x - card_img_dim.x * 3 - 20.f * 1) * 0.5f;
 
     ImGui::SetCursorPosX(mid_pos);
     ImGui::Image(assets::icon_card.tex()->srv(), card_img_dim);
@@ -137,6 +137,21 @@ auto navbar::draw() -> void
     if (ImGui::InvisibleButton("settings_icon", card_img_dim))
     {
         g_gui_settings_view_visible = !g_gui_settings_view_visible;
+    }
+    ImGui::SameLine();
+
+    ImGui::SetCursorPosX(mid_pos + card_img_dim.x * 2 + 20.f * 2);
+    ImGui::Image(assets::icon_coin.tex()->srv(), card_img_dim);
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(mid_pos + card_img_dim.x * 2 + 20.f * 2);
+    ImGui::InvisibleButton("coin_icon", card_img_dim);
+    if (ImGui::IsItemHovered())
+    {
+        g_vefxio_ppad.store(1ull << 0x1D);
+    }
+    else
+    {
+        g_vefxio_ppad.store(0);
     }
     ImGui::SameLine();
 

@@ -4,6 +4,8 @@
 #include "style.hpp"
 #include "widgets/widgets.hpp"
 
+static bool show_demo = false;
+
 auto debug_view::draw() -> void
 {
     ImGuiIO& io = ImGui::GetIO();
@@ -122,5 +124,7 @@ auto debug_view::draw() -> void
             ImGui::Text("card: NULL");
         ImGui::PopID();
     }
+    ImGui::Checkbox("show imgui demo", &show_demo);
+    ImGui::ShowDemoWindow(&show_demo);
     ImGui::End();
 }

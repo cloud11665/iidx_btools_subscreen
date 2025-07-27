@@ -61,6 +61,16 @@ extern "C" __declspec(dllexport) uint8_t backend_vefxio_read_slider(
     return data;
 }
 
+extern "C" __declspec(dllexport) bool backend_vefxio_io_recv(
+    uint64_t* ppad
+)
+{
+    const uint64_t kflag = 1ull << 0x1D;
+    uint64_t pending = g_vefxio_ppad.load();
+    *ppad = (*ppad & ~kflag) | pending;
+    return true;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //                                 eamio
 ///////////////////////////////////////////////////////////////////////////////

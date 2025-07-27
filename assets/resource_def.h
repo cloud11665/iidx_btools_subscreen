@@ -12,6 +12,7 @@
 #define IDR_icon_settings   209
 #define IDR_icon_concentration_on 214
 #define IDR_icon_concentration_off 215
+#define IDR_icon_coin 216
 
 #define IDR_effector_bg     210
 #define IDR_effector_0      211
@@ -45,4 +46,5 @@
     _(touch_effect_cross)            \
     _(touch_effect_cross2)           \
     _(icon_concentration_on)         \
-    _(icon_concentration_off)        
+    _(icon_concentration_off)        \
+    _(icon_coin)

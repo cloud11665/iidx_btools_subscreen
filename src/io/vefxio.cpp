@@ -1,4 +1,4 @@
-#define WIN32_LEAN_AND_MEAN
+﻿#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
 #include <atomic>
@@ -23,12 +23,14 @@ thread_destroy_t destroy_thread;
 typedef void    (*backend_init_t)(void);
 typedef bool    (*backend_write_16seg_t)(const char*);
 typedef uint8_t (*backend_read_slider_t)(uint8_t);
+typedef bool    (*backend_io_recv_t)(uint64_t*);
 
 static std::atomic_bool         g_backend_ready{ false };
 static HMODULE                  g_backend{ nullptr };
 static backend_init_t           backend_init{ nullptr };
 static backend_write_16seg_t    backend_write_16seg{ nullptr };
 static backend_read_slider_t    backend_read_slider{ nullptr };
+static backend_io_recv_t        backend_io_recv{ nullptr };
 
 int initialize(void* data)
 {
@@ -53,9 +55,13 @@ int initialize(void* data)
     backend_read_slider = reinterpret_cast<backend_read_slider_t>(::GetProcAddress(g_backend, "backend_vefxio_read_slider"));
     info_logger("iidx_submon_vefxio", "found backend_vefxio_read_slider (%p)", (void*)backend_read_slider);
 
+    backend_io_recv = reinterpret_cast<backend_io_recv_t>(::GetProcAddress(g_backend, "backend_vefxio_io_recv"));
+    info_logger("iidx_submon_vefxio", "found backend_vefxio_io_recv (%p)", (void*)backend_io_recv);
+
     if (backend_init &&
         backend_write_16seg &&
-        backend_read_slider)
+        backend_read_slider &&
+        backend_io_recv)
     {
         backend_init();
         g_backend_ready = true;
@@ -100,7 +106,8 @@ BT_API void __cdecl vefx_io_fini(void)
 
 BT_API bool __cdecl vefx_io_recv(uint64_t* ppad)
 {
-    return true;
+    if (!g_backend_ready) return 0;
+    return backend_io_recv(ppad);
 }
 
 BT_API uint8_t __cdecl vefx_io_get_slider(uint8_t slider_no)
