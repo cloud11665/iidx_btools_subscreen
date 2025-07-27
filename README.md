@@ -1,4 +1,5 @@
 ﻿# [WIP] vefxio + eamio subscreen for iidx 12-24
+<img width="1920" height="1080" alt="Capture" src="https://github.com/user-attachments/assets/ddc6eea5-0e5a-42a4-bc4e-d4a4b7b305ed" />
 
 ## Installation
 - place `backend.dll`, `vefxio.dll`, `eamio.dll` in the same folder as your `gamestart-XX.bat`
@@ -17,6 +18,7 @@ inject -K iidxhook5.dll -K backend.dll bm2dx.dll
 - effector sliders
 - spice2x CardIO reader support
 - spcie2x card json support
+- concentration mode
 ## todo
 - replay recording and uploading using official XRPC apis
 - scene-awareness
@@ -36,6 +38,7 @@ inject -K iidxhook5.dll -K backend.dll bm2dx.dll
 	- rewrote resource+texture management
 	- added attributions to their respective authors
 	- Added auto-disable of  windows touch accessibility visual feedback
+ 	- Added concentration mode	 
 - v0.1.0 (26.07.2025)
 	- initial release
 	- keypads, ticker, CardIO driver, effector
