@@ -55,7 +55,8 @@ auto card_view::draw() -> void
 	std::call_once(of, []() {
 		auto paths = {
 			get_appdata_path("spicetools_card_manager.json"),
-			get_appdata_path("spice2x\\card_manager.json")
+			get_appdata_path("spice2x\\card_manager.json"),
+			get_appdata_path("spice2x\\spicetools_card_manager.json")
 		};
 		for (const auto& path : paths)
 		{
