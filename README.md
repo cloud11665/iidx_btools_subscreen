@@ -1,7 +1,10 @@
-﻿# [WIP] vefxio + eamio subscreen for iidx 12-24
-<img width="1920" height="1080" alt="Capture" src="https://github.com/user-attachments/assets/ddc6eea5-0e5a-42a4-bc4e-d4a4b7b305ed" />
+﻿# vefxio + eamio subscreen for iidx 12-24
+<img height="360" alt="Capture" src="https://github.com/user-attachments/assets/ddc6eea5-0e5a-42a4-bc4e-d4a4b7b305ed" />
 
 ## Installation
+
+- download the `dll-artifacts.zip` from the [latest commit artifact](https://github.com/cloud11665/iidx_btools_subscreen/actions) 
+- extract it (`backend.dll`, `vefxio.dll`, `eamio.dll`)
 - place `backend.dll`, `vefxio.dll`, `eamio.dll` in the same folder as your `gamestart-XX.bat`
 - for styles that ship with `bm2dx.dll` edit `gamestart-XX.bat` as shown below
 ```
@@ -20,10 +23,8 @@ inject -K iidxhook5.dll -K backend.dll bm2dx.dll
 - spcie2x card json support
 - concentration mode
 ## todo
-- replay recording and uploading using official XRPC apis
-- scene-awareness
-- add auto-releases
-- improve readme
+- ~~replay recording and uploading using official XRPC apis~~
+- ~~scene-awareness~~
 
 ## Credits
 [Radioo/aic_key_eamio](https://github.com/Radioo/aic_key_eamio) - for the initial aic CardIO implementation and general help with netcode and CI
@@ -33,6 +34,8 @@ inject -K iidxhook5.dll -K backend.dll bm2dx.dll
 [dmadison/LED-Segment-ASCII](https://github.com/dmadison/LED-Segment-ASCII) - for base subscreen font (modified by me to match beatmania)
 
 ## changelog
+- (master)
+    - fixed spice2x card paths
 - v0.2.0 (27.07.2025)
 	- fixed alpha in some textures as they got saved without it
 	- rewrote resource+texture management
