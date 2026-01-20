@@ -1,4 +1,4 @@
-﻿#include <cassert>
+#include <cassert>
 #include <algorithm>
 #include <span>
 #include <fstream>
@@ -105,7 +105,8 @@ static HWND FindIIDXWindow()
     static const char* bm2dx_class_prefix[] = {
         "beatmaniaIIDX",
         "beatmania IIDX",
-        "C02"
+        "C02",
+        "SOUND VOLTEX"
     };
 
     HWND iidx_window = nullptr;
