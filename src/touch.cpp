@@ -71,8 +71,6 @@ LRESULT CALLBACK GetMsgProc(int code, WPARAM wParam, LPARAM lParam)
             {
                 float iidx_width = float(g_iidx_rect.right - g_iidx_rect.left);
                 float iidx_height = float(g_iidx_rect.bottom - g_iidx_rect.top);
-                if (g_is_sdvx)
-                    std::swap(iidx_width, iidx_height);
                 float sub_width = float(g_rect.right - g_rect.left);
                 float sub_height = float(g_rect.bottom - g_rect.top);
 
@@ -237,8 +235,17 @@ auto touch::process_touch() -> void
 
             float raw_x = float(v.ptHimetricLocation.x) * g_himetric_scale_x.value();
             float raw_y = float(v.ptHimetricLocation.y) * g_himetric_scale_y.value();
-            pos.x = raw_x;
-            pos.y = raw_y;
+            if (g_is_sdvx) {
+                float display_w = float(g_rect.right - g_rect.left);
+                float display_h = float(g_rect.bottom - g_rect.top);
+                float u = raw_x / display_w;
+                float v = raw_y / display_h;
+                pos.x = (1.0f - v) * display_w;
+                pos.y = u * display_h;
+            } else {
+                pos.x = raw_x;
+                pos.y = raw_y;
+            }
             is_pressed = true;
             break; // Only take the first
         }
