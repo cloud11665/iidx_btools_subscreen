@@ -239,8 +239,8 @@ auto touch::process_touch() -> void
             float raw_y = float(v.ptHimetricLocation.y) * g_himetric_scale_y.value();
             if (g_is_sdvx) {
                 ImVec2 display = io.DisplaySize;
-                pos.x = display.x - raw_y;
-                pos.y = raw_x;
+                pos.x = display.x - raw_x;
+                pos.y = display.y - raw_y;
             } else {
                 pos.x = raw_x;
                 pos.y = raw_y;
