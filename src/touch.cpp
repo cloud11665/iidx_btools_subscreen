@@ -240,8 +240,8 @@ auto touch::process_touch() -> void
                 float display_h = float(g_rect.bottom - g_rect.top);
                 float u = raw_x / display_w;
                 float v = raw_y / display_h;
-                pos.x = (1.0f - v) * display_w;
-                pos.y = u * display_h;
+                pos.x = v * display_w;
+                pos.y = (1.0f - u) * display_h;
             } else {
                 pos.x = raw_x;
                 pos.y = raw_y;
