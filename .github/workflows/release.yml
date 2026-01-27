@@ -1,4 +1,4 @@
-﻿name: Build C++ (MSVC) x86
+name: Build C++ (MSVC) x86/x64
 
 on:
   push:
@@ -44,21 +44,66 @@ jobs:
       - name: Upload DLL artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: dll-artifacts
+          name: dll-artifacts-x86
           path: |
             ${{ github.workspace }}\\out\\build\\x86-release\\backend.dll
             ${{ github.workspace }}\\out\\build\\x86-release\\vefxio.dll
             ${{ github.workspace }}\\out\\build\\x86-release\\eamio.dll
 
+  build-win64:
+    runs-on: windows-latest
+
+    env:
+      VCPKG_DEFAULT_TRIPLET: x64-windows-static
+
+    defaults:
+      run:
+        shell: cmd
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: lukka/get-cmake@latest
+
+      - name: Restore from cache and setup vcpkg executable and data files.
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgJsonGlob: 'vcpkg.json'
+          runVcpkgInstall: true
+
+      - name: Run CMake+vcpkg+Ninja to build packages and generate/build the code.
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: x64-release
+          buildPreset: x64-release
+
+      - name: Upload DLL artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dll-artifacts-x64
+          path: |
+            ${{ github.workspace }}\\out\\build\\x64-release\\backend.dll
+            ${{ github.workspace }}\\out\\build\\x64-release\\vefxio.dll
+            ${{ github.workspace }}\\out\\build\\x64-release\\eamio.dll
+
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: build-win32
+    needs:
+      - build-win32
+      - build-win64
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: dll-artifacts
-          path: release/
+          name: dll-artifacts-x86
+          path: release/x86/
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: dll-artifacts-x64
+          path: release/x64/
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
@@ -66,8 +111,11 @@ jobs:
           name: Release ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
           files: |
-            release/backend.dll
-            release/vefxio.dll
-            release/eamio.dll
+            release/x86/backend.dll
+            release/x86/vefxio.dll
+            release/x86/eamio.dll
+            release/x64/backend.dll
+            release/x64/vefxio.dll
+            release/x64/eamio.dll
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
