@@ -102,21 +102,28 @@ auto navbar::draw() -> void
     }
     ImGui::SameLine();
 
-    ImGui::SetCursorPosX(avail.x - key_img_dim.x);
-
-    float tint2 = g_gui_keypad2_visible ? 1.f : 0.5f;
-    if (ImGui::ImageButton("p2_key_btn",
-        assets::icon_keypad.tex()->srv(),
-        key_img_dim,
-        ImVec2(0, 0),
-        ImVec2(1, 1),
-        ImVec4(0, 0, 0, 0),
-        ImVec4(tint2, tint2, tint2, 1)
-    ))
+    if (g_is_sdvx)
     {
-        g_gui_keypad2_visible = !g_gui_keypad2_visible;
+        g_gui_keypad2_visible = false;
     }
-    ImGui::SameLine();
+    else
+    {
+        ImGui::SetCursorPosX(avail.x - key_img_dim.x);
+
+        float tint2 = g_gui_keypad2_visible ? 1.f : 0.5f;
+        if (ImGui::ImageButton("p2_key_btn",
+            assets::icon_keypad.tex()->srv(),
+            key_img_dim,
+            ImVec2(0, 0),
+            ImVec2(1, 1),
+            ImVec4(0, 0, 0, 0),
+            ImVec4(tint2, tint2, tint2, 1)
+        ))
+        {
+            g_gui_keypad2_visible = !g_gui_keypad2_visible;
+        }
+        ImGui::SameLine();
+    }
 
     float mid_pos = (avail.x - card_img_dim.x * 3 - 20.f * 1) * 0.5f;
 
@@ -167,13 +174,16 @@ auto navbar::draw() -> void
     concentration_button("PLAYER 01");
     ImGui::PopID();
 
-    ImGui::SetCursorPos({
-        avail.x - key_img_dim.x - spacing.x * 3 - conc_size.x,
-        cpos.y
-    });
-    ImGui::PushID(1);
-    concentration_button("PLAYER 02");
-    ImGui::PopID();
+    if (!g_is_sdvx)
+    {
+        ImGui::SetCursorPos({
+            avail.x - key_img_dim.x - spacing.x * 3 - conc_size.x,
+            cpos.y
+        });
+        ImGui::PushID(1);
+        concentration_button("PLAYER 02");
+        ImGui::PopID();
+    }
 
 
     if (g_gui_concentration)

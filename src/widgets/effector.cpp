@@ -129,6 +129,9 @@ auto draw_slider(
 
 auto effector::draw() -> void
 {
+    if (g_is_sdvx)
+        return;
+
     ImVec2 spacing = ImGui::GetStyle().ItemSpacing;
     ImVec2 window_padding = ImGui::GetStyle().WindowPadding;
     ImVec2 w_size = {

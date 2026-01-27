@@ -108,7 +108,7 @@ auto keypads::draw() -> void
         }
         ImGui::End();
     }
-    if (g_gui_keypad2_visible)
+    if (!g_is_sdvx && g_gui_keypad2_visible)
     {
         std::lock_guard<std::mutex> l(g_eamio_card_mutex);
 

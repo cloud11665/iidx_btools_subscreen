@@ -193,6 +193,9 @@ static auto draw_char(
 
 auto ticker::draw() -> void
 {
+	if (g_is_sdvx)
+		return;
+
 	ImVec2 wsize = { 9 * 140 + 20, 220 };
 
 	ImGuiViewport* main_viewport = ImGui::GetMainViewport();
