@@ -15,6 +15,25 @@ inject iidxhook2.dll backend.dll bm2dx.exe
 inject -K iidxhook5.dll -K backend.dll bm2dx.dll
 ```
 
+### BIO2 IIDXIO + subscreen
+
+The artifact also includes `iidxio-bio2-vefx.dll`, an optional adapter for
+BIO2 setups. It loads the original Bemanitools BIO2 IIDXIO as a child DLL,
+then routes the VEFX functions through this project's `vefxio.dll`:
+
+- `iidx_io_set_loggers`, `iidx_io_init`, and `iidx_io_fini` initialize and
+  shut down both the BIO2 child and `vefxio.dll`.
+- `iidx_io_ep2_recv` lets `vefx_io_recv` update the normal IIDX pad word after
+  the BIO2 child polls hardware.
+- `iidx_io_ep2_get_slider` reads sliders from `vefxio.dll`.
+- `iidx_io_ep3_write_16seg` writes ticker text to `vefxio.dll`.
+
+To use it, place `backend.dll`, `vefxio.dll`, `iidxio-bio2-vefx.dll`, and the
+stock Bemanitools BIO2 IIDXIO DLL in the game directory. Rename the stock BIO2
+DLL to `iidxio-bio2-child.dll`, then copy or rename `iidxio-bio2-vefx.dll` to
+the `iidxio.dll` filename expected by your IIDX hook. If you want a different
+child DLL path, set `IIDX_SUBSCREEN_IIDXIO_CHILD` before launch.
+
 ## Features
 - Ticker
 - keypads

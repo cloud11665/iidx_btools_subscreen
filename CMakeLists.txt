@@ -112,5 +112,17 @@ target_include_directories(eamio PRIVATE
     src/
 )
 
+add_library(iidxio_bio2_vefx SHARED
+    src/io/iidxio_bio2_vefx.cpp
+)
+
+set_target_properties(iidxio_bio2_vefx PROPERTIES
+    OUTPUT_NAME "iidxio-bio2-vefx"
+)
+
+target_include_directories(iidxio_bio2_vefx PRIVATE
+    src/
+)
+
 #source_group("Source Files" FILES ${SRC})
 #source_group("ImGui\\Core"   FILES ${IMGUI_CORE})

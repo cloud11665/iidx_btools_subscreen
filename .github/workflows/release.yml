@@ -49,6 +49,7 @@ jobs:
             ${{ github.workspace }}\\out\\build\\x86-release\\backend.dll
             ${{ github.workspace }}\\out\\build\\x86-release\\vefxio.dll
             ${{ github.workspace }}\\out\\build\\x86-release\\eamio.dll
+            ${{ github.workspace }}\\out\\build\\x86-release\\iidxio-bio2-vefx.dll
 
   build-win64:
     runs-on: windows-latest
@@ -87,6 +88,7 @@ jobs:
             ${{ github.workspace }}\\out\\build\\x64-release\\backend.dll
             ${{ github.workspace }}\\out\\build\\x64-release\\vefxio.dll
             ${{ github.workspace }}\\out\\build\\x64-release\\eamio.dll
+            ${{ github.workspace }}\\out\\build\\x64-release\\iidxio-bio2-vefx.dll
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
@@ -114,8 +116,10 @@ jobs:
             release/x86/backend.dll
             release/x86/vefxio.dll
             release/x86/eamio.dll
+            release/x86/iidxio-bio2-vefx.dll
             release/x64/backend.dll
             release/x64/vefxio.dll
             release/x64/eamio.dll
+            release/x64/iidxio-bio2-vefx.dll
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
